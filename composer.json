@@ -1,0 +1,23 @@
+{
+    "name": "paulo/paulo",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Paulo",
+            "email": "phalkmin@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "orhanerday/open-ai": "^4.7"
+    },
+    "config": {
+                "optimize-autoloader": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Orhanerday\\OpenAi\\": "src"
+        }
+    }
+    
+}
