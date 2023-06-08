@@ -1,9 +1,9 @@
-=== OpenAI API Blog Post Creator ===
+=== Automated Blog Content Creator ===
 Contributors: phalkmin
 Tags: openai, blog, post, generator
-Requires at least: 5.0
-Tested up to: 5.8
-Stable tag: 0.5
+Requires at least: 5.8
+Tested up to: 6.2
+Stable tag: 0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,7 +11,7 @@ Create blog posts automatically using the OpenAI API - It's ChatGPT directly on 
 
 == Description ==
 
-The OpenAI API Blog Post Creator plugin allows you to automatically generate blog posts using the power of the OpenAI API. With this plugin, you can harness the capabilities of ChatGPT to create SEO-focused articles on your WordPress site. Simply provide a set of keywords or subjects, and the plugin will generate engaging content for you.
+The Automated Blog Content Creator plugin allows you to automatically generate blog posts using the power of the OpenAI API. With this plugin, you can harness the capabilities of ChatGPT to create SEO-focused articles on your WordPress site. Simply provide a set of keywords or subjects, and the plugin will generate engaging content for you.
 
 Features:
 
@@ -59,10 +59,15 @@ You can manually generate a blog post by clicking the "Create post manually" but
 
 == Changelog ==
 
+= 0.8 =
+
+- WordPress Review Guidelines fixes
+
 = 0.5 =
-* Initial release.
+
+- Initial release.
 
 == Upgrade Notice ==
 
 = 0.5 =
-Initial release of the OpenAI API Blog Post Creator plugin.
+Initial release of the Automated Blog Content Creator plugin.
