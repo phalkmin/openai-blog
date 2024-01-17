@@ -9,7 +9,7 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "orhanerday/open-ai": "^4.7"
+        "orhanerday/open-ai": "^5.0"
     },
     "config": {
                 "optimize-autoloader": true

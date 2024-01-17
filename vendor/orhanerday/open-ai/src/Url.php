@@ -113,7 +113,7 @@ class Url
      */
     public static function fineTuneUrl(): string
     {
-        return self::OPEN_AI_URL . "/fine-tunes";
+        return self::OPEN_AI_URL . "/fine_tuning/jobs";
     }
 
     /**
@@ -159,5 +159,23 @@ class Url
     public static function chatUrl(): string
     {
         return self::OPEN_AI_URL . "/chat/completions";
+    }
+
+    /**
+     * @param
+     * @return string
+     */
+    public static function assistantsUrl(): string
+    {
+        return self::OPEN_AI_URL . "/assistants";
+    }
+
+    /**
+     * @param
+     * @return string
+     */
+    public static function threadsUrl(): string
+    {
+        return self::OPEN_AI_URL . "/threads";
     }
 }

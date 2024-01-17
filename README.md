@@ -59,6 +59,10 @@ You can manually generate a blog post by clicking the "Create post manually" but
 
 == Changelog ==
 
+= 0.9 =
+
+- Bug Fixes, Quality of life updates - Expect 1.0 in a few days
+
 = 0.8 =
 
 - WordPress Review Guidelines fixes
