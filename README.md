@@ -2,8 +2,8 @@
 Contributors: phalkmin
 Tags: openai, blog, post, generator
 Requires at least: 5.8
-Tested up to: 6.2
-Stable tag: 0.8
+Tested up to: 6.4
+Stable tag: 1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,23 @@ You can manually generate a blog post by clicking the "Create post manually" but
 
 == Changelog ==
 
+= 1.0 =
+- Added
+	- Implemented image generation using OpenAI's DALL-E model based on provided prompts and keywords.
+	- Introduced the option to select categories for posts, allowing users to specify relevant categories for generated content.
+	- Provided an option to receive email notifications when a new post is created automatically.
+
+- Changed
+	- Refactored code for better readability, modularity, and maintainability.
+	- Updated UI/UX for the settings page to improve user experience.
+	- Better scheduled post generation feature, allowing users to schedule automatic post creation at hourly, daily, or weekly intervals.
+	- Revised error handling and logging mechanisms for smoother operation.
+	
+
+- Fixed
+	- Resolved issues related to API key validation and error handling.
+	- Fixed bugs and glitches reported by users in the previous version.
+
 = 0.9 =
 
 - Bug Fixes, Quality of life updates - Expect 1.0 in a few days
@@ -70,8 +87,3 @@ You can manually generate a blog post by clicking the "Create post manually" but
 = 0.5 =
 
 - Initial release.
-
-== Upgrade Notice ==
-
-= 0.5 =
-Initial release of the Automated Blog Content Creator plugin.

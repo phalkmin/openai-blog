@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automated Blog Content Creator
 Description: Create blog posts automatically using the OpenAI API - It's ChatGPT directly on your site!
-Version: 0.9
+Version: 1.0
 Author: Paulo H. Alkmin
 Author URI: https://phalkmin.me/
 Text Domain: automated-wordpress-content-creator
@@ -138,7 +138,7 @@ function abcc_create_blocks( $text_array ) {
 		if ( ! empty( $item ) ) {
 			$block = array(
 				'name'       => 'paragraph',
-				'attributes' => array( 'align' => 'left', 'custom_attribute' => 'value' ),  // Adicione atributos personalizados aqui.
+				'attributes' => array( 'align' => 'left', 'custom_attribute' => 'value' ), 
 				'content'    => wp_kses_post( $item ),
 			);
 			$blocks[] = $block;
@@ -169,9 +169,46 @@ function abcc_gutenberg_blocks( $blocks = array() ) {
  * @param string  $char_limit The maximum number of characters that the generated text should have.
  */
 function abcc_openai_generate_post( $api_key, $keywords, $auto_create = false, $char_limit = 200 ) {
-	$prompt = __( 'Write a SEO focused article about ', 'automated-blog-content-creator' ) . implode( ', ', array_map( 'sanitize_text_field', $keywords ) );
+
+	$selected_categories = get_option('openai_selected_categories', array());
+	$category_names = array();
+
+	// Obtém os nomes das categorias selecionadas
+	foreach ($selected_categories as $category_id) {
+	    $category = get_category($category_id);
+	    if ($category) {
+	        $category_names[] = $category->name;
+	    }
+	}
+
+
+	// Informações adicionais do site
+	$site_name = get_bloginfo('name');
+	$site_description = get_bloginfo('description');
+	$site_url = get_bloginfo('url');
+	$cat_images = "";
+
+	$prompt = __( 'Create a well-optimized SEO article for my site ', 'automated-blog-content-creator' ) . $site_name;
+
+	$prompt .= __( ' with the URL ', 'automated-blog-content-creator' ) . $site_url;
+
+	if ( $site_description) {
+		$prompt .= __( ' and this meta description: "', 'automated-blog-content-creator' ) . $site_description . '"';
+	}
+
+	$prompt .= __( '. The article should focus on the following keywords: "', 'automated-blog-content-creator' ) . implode(', ', array_map('sanitize_text_field', $keywords)) . '"';
+
+	// Adiciona as categorias selecionadas
+	if (!empty($category_names)) {
+	    $prompt .= __( ' and in the following categories: "', 'automated-blog-content-creator' ) . implode(', ', $category_names) . '"';
+	    $cat_images = __( 'Emphasize on: "', 'automated-blog-content-creator' ) . implode(', ', $category_names) . __( '" and other relevant visual elements.', 'automated-blog-content-creator' );
+	}
+
+    $prompt_images = sprintf( __( 'Create images representing %1$s . %2$s Visit %3$s for inspiration.', 'automated-blog-content-creator' ), implode(', ', array_map('sanitize_text_field', $keywords)), $cat_images, $site_url );
+
+
 	$text   = abcc_openai_generate_text( $api_key, $prompt, $char_limit );
-	$images = abcc_openai_generate_images( $api_key, $prompt, 1 );
+	$images = abcc_openai_generate_images( $api_key, $prompt_images, 1 );
 
 	$format_content = abcc_create_blocks( $text );
 	$post_content   = abcc_gutenberg_blocks( $format_content );
@@ -182,6 +219,8 @@ function abcc_openai_generate_post( $api_key, $keywords, $auto_create = false, $
 		'post_status'  => 'draft',
 		'post_author'  => 1,
 		'post_type'    => 'post',
+		'post_category' => get_option('openai_selected_categories', array()), 
+
 	);
 
 	$post_id = wp_insert_post( $post_data );
@@ -255,19 +294,27 @@ function get_openai_event_schedule() {
 }
 
 function abcc_openai_blog_post_options_page() {
+	
 	if ( isset( $_POST['submit'], $_POST['abcc_openai_nonce'] ) && wp_verify_nonce( $_POST['abcc_openai_nonce'], 'abcc_openai_generate_post' ) ) {
 		$api_key = isset($_POST['openai_api_key']) ? sanitize_text_field(wp_unslash($_POST['openai_api_key'])) : '';
 		$keywords = isset($_POST['openai_keywords']) ? sanitize_text_field(wp_unslash($_POST['openai_keywords'])) : '';
 		$auto_create = isset($_POST['openai_auto_create']) ? sanitize_text_field(wp_unslash($_POST['openai_auto_create'])) : '';
 		$char_limit = isset($_POST['openai_char_limit']) ? absint($_POST['openai_char_limit']) : 0;
 		$openai_email_notifications = isset($_POST['openai_email_notifications']);
+		$selected_categories = isset($_POST['openai_selected_categories']) ? array_map('intval', $_POST['openai_selected_categories']) : array();
 
 		update_option('openai_api_key', wp_unslash($api_key));
 		update_option('openai_keywords', wp_unslash($keywords));
 		update_option('openai_auto_create', $auto_create);
 		update_option('openai_char_limit', $char_limit);
 		update_option('openai_email_notifications', $openai_email_notifications);
+        update_option('openai_selected_categories', $selected_categories);
+
 	}
+
+	$categories = get_categories( array( 'hide_empty' => false ) );
+    $selected_categories = get_option('openai_selected_categories', array());
+
 
 	$api_key = get_option('openai_api_key', '');
 	$keywords = get_option('openai_keywords', '');
@@ -333,6 +380,20 @@ function abcc_openai_blog_post_options_page() {
 																rows="4"><?php echo esc_textarea($keywords); ?></textarea>
 														</td>
 													</tr>
+<tr>
+    <th scope="row"><label for="openai_selected_categories">
+            <?php echo esc_html__('Select Categories:', 'automated-blog-content-creator'); ?>
+        </label></th>
+    <td>
+        <?php foreach ($categories as $category) { ?>
+            <label>
+                <input type="checkbox" name="openai_selected_categories[]" value="<?php echo esc_attr($category->term_id); ?>" <?php checked(in_array($category->term_id, $selected_categories)); ?>>
+                <?php echo esc_html($category->name); ?>
+            </label>
+            <br>
+        <?php } ?>
+    </td>
+</tr>
 													<tr>
 														<th scope="row"><label for="openai_auto_create">
 																<?php echo esc_html__('Automatic post creation?', 'automated-blog-content-creator'); ?>
@@ -484,6 +545,5 @@ register_deactivation_hook( __FILE__, 'abcc_openai_deactivate_plugin' );
 
 add_action( 'admin_notices', 'display_openai_settings_errors' );
 function display_openai_settings_errors() {
-    // Verifique se há mensagens de erro para a configuração do OpenAI.
     settings_errors( 'openai-settings' );
 }
