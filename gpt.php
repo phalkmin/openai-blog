@@ -5,19 +5,19 @@ use GeminiAPI\Client;
 use GeminiAPI\Resources\Parts\TextPart;
 
 function abcc_gemini_generate_text( $api_key, $prompt, $length ) {
-	
-	$gemini = new Client($api_key);
 
-	$chat = $gemini->geminiPro()->startChat();	
+	$gemini = new Client( $api_key );
 
-	$response = $chat->sendMessage(new TextPart($prompt));
-	
+	$chat = $gemini->geminiPro()->startChat();
+
+	$response = $chat->sendMessage( new TextPart( $prompt ) );
+
 	if ( is_wp_error( $response ) ) {
 		add_settings_error(
-			'openai-settings',  
-			'api-request-error', 
+			'openai-settings',
+			'api-request-error',
 			esc_html__( 'Error in API request. Please check your Gemini configuration.', 'automated-blog-content-creator' ),
-			'error'             
+			'error'
 		);
 		return;
 	}
@@ -42,26 +42,26 @@ function abcc_gemini_generate_text( $api_key, $prompt, $length ) {
  * text is broken into an array at each line break.
  */
 function abcc_openai_generate_text( $api_key, $prompt, $length ) {
-	
+
 	$openai = new OpenAi( $api_key );
 
 	$response = $openai->completion(
 		array(
-			'model'       => 'gpt-3.5-turbo-instruct',
-			'prompt'      => wp_kses_post( $prompt ),
-			'max_tokens'  => absint( $length ),
-			'n'           => 1,
-			'stop'        => null,
+			'model' => 'gpt-3.5-turbo-instruct',
+			'prompt' => wp_kses_post( $prompt ),
+			'max_tokens' => absint( $length ),
+			'n' => 1,
+			'stop' => null,
 			'temperature' => 0.8,
 		)
 	);
 
 	if ( is_wp_error( $response ) ) {
 		add_settings_error(
-			'openai-settings',  
-			'api-request-error', 
+			'openai-settings',
+			'api-request-error',
 			esc_html__( 'Error in API request. Please check your OpenAI configuration.', 'automated-blog-content-creator' ),
-			'error'             
+			'error'
 		);
 		return;
 	}
@@ -93,16 +93,16 @@ function abcc_openai_generate_images( $api_key, $prompt, $n, $image_size = '1024
 
 	$response = $openai->image(
 		array(
-			'model'           => 'dall-e-3',
-			'prompt'          => wp_kses_post( $prompt ),
-			'n'               => absint( $n ),
-			'size'            => $image_size,
+			'model' => 'dall-e-3',
+			'prompt' => wp_kses_post( $prompt ),
+			'n' => absint( $n ),
+			'size' => $image_size,
 			'response_format' => 'url'
 		)
 	);
 
 	if ( is_wp_error( $response ) ) {
-		error_log( print_r($response, true));
+		error_log( print_r( $response, true ) );
 		return;
 	}
 
