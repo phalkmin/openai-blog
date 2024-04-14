@@ -1,13 +1,13 @@
-=== Automated Blog Content Creator ===
+=== WP-AutoInsight - (former Automated Blog Content Creator) ===
 Contributors: phalkmin
-Tags: openai, blog, post, generator
+Tags: openai, geminiai, blog, post, generator
 Requires at least: 5.8
 Tested up to: 6.4
-Stable tag: 1.0
+Stable tag: 1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create blog posts automatically using the OpenAI API - It's ChatGPT directly on your site!
+Create blog posts automatically using the OpenAI and Gemini APIs!
 
 == Description ==
 
@@ -58,6 +58,15 @@ You can manually generate a blog post by clicking the "Create post manually" but
 2. Example generated blog post using Gutenberg blocks.
 
 == Changelog ==
+
+= 1.4 =
+- Added
+	- Gemini API - Now you can use Google AI to create your posts!
+    - A tone selector so you can define how the post should be written.
+- Changed
+    - Now it's possible to use wp-config variables to store the OpenAI and GeminiAI API keys. It's more secure than storing them in the database;
+    - The admin menu and form was remade, so it's easier to work and don't get lost on so many options;
+    - Minor changes for better usage;
 
 = 1.0 =
 - Added
