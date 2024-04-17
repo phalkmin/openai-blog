@@ -33,7 +33,7 @@ jobs:
       env:
         SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-        PLUGIN_SLUG: ${{ secrets.SLUG }}
+        SLUG: ${{ secrets.SLUG }}
     # After the deploy, we also want to create a zip and upload it to the release on Github. We don't want
     # users to have to go to the repository to find our plugin :).
     - name: Upload release asset
