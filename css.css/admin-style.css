@@ -1,0 +1,38 @@
+.abcc-settings-wrapper .postbox {
+  margin-bottom: 20px;
+}
+
+.abcc-settings-wrapper .postbox h2 {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+}
+
+.abcc-settings-wrapper .postbox .inside {
+  padding: 10px 20px;
+}
+
+.abcc-settings-wrapper .form-table th {
+  width: 20%;
+}
+
+.abcc-settings-wrapper .form-table td {
+  padding: 10px 0;
+}
+
+.abcc-settings-wrapper .form-table input[type="text"],
+.abcc-settings-wrapper .form-table textarea {
+  width: 100%;
+}
+
+.abcc-settings-wrapper .form-table input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.abcc-settings-wrapper .form-table .description {
+  margin-top: 5px;
+  display: block;
+}
+
+.abcc-settings-wrapper .submit {
+  padding: 10px 20px;
+}

@@ -1,5 +1,17 @@
 <?php
+/**
+ * File: admin.php
+ *
+ * This file contains functions related to the administration settings
+ * of the WP-AutoInsight plugin, including menu pages and options.
+ *
+ * @package WP-AutoInsight
+ */
 
+/**
+ * The function `abcc_add_subpages_to_menu` adds subpages for "Text Settings" and "Advanced Settings"
+ * under the main menu page "WP-AutoInsight" in WordPress admin menu.
+ */
 function abcc_add_subpages_to_menu() {
 	add_menu_page(
 		__( 'WP-AutoInsight', 'automated-blog-content-creator' ),
@@ -29,27 +41,60 @@ function abcc_add_subpages_to_menu() {
 }
 add_action( 'admin_menu', 'abcc_add_subpages_to_menu' );
 
+/**
+ * The function `wpai_category_dropdown` is used to display a dropdown of categories in the WordPress admin
+ * for the OpenAI blog post generator plugin.
+ *
+ * @param array $selected_categories An array of category IDs that should be selected by default.
+ */
+function wpai_category_dropdown( $selected_categories = array() ) {
+	$categories = get_categories( array( 'hide_empty' => 0 ) );
+	echo '<select class="wpai-category-select" name="openai_selected_categories[]" multiple="multiple" style="width:100%;">';
+	foreach ( $categories as $category ) {
+		$selected = in_array( $category->term_id, $selected_categories ) ? ' selected="selected"' : '';
+		echo '<option value="' . esc_attr( $category->term_id ) . '"' . esc_html( $selected ) . '>' . esc_html( $category->name ) . '</option>';
+	}
+	echo '</select>';
+}
+
+
+/**
+ * The function `abcc_openai_text_settings_page` is used to display and handle settings for an OpenAI
+ * blog post generator, including options for keywords, tone selection, and category selection.
+ */
 function abcc_openai_text_settings_page() {
 
-	if ( isset( $_POST['submit'], $_POST['abcc_openai_nonce'] ) && wp_verify_nonce( $_POST['abcc_openai_nonce'], 'abcc_openai_generate_post' ) ) {
-		$keywords = isset( $_POST['openai_keywords'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_keywords'] ) ) : '';
-		$tone     = isset( $_POST['openai_tone'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_tone'] ) ) : '';
+	if ( isset( $_POST['submit'], $_POST['abcc_openai_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['abcc_openai_nonce'] ), 'abcc_openai_generate_post' ) ) {
 
+		$keywords            = isset( $_POST['openai_keywords'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_keywords'] ) ) : '';
 		$selected_categories = isset( $_POST['openai_selected_categories'] ) ? array_map( 'intval', $_POST['openai_selected_categories'] ) : array();
 
+		if ( isset( $_POST['openai_tone'] ) ) {
+			$openai_tone = sanitize_text_field( wp_unslash( $_POST['openai_tone'] ) );
+
+			if ( 'custom' === $openai_tone ) {
+				$custom_tone = isset( $_POST['custom_tone'] ) ? sanitize_text_field( wp_unslash( $_POST['custom_tone'] ) ) : '';
+				update_option( 'custom_tone', $custom_tone );
+			}
+
+			update_option( 'openai_tone', $openai_tone );
+		}
+
 		update_option( 'openai_keywords', wp_unslash( $keywords ) );
-		update_option( 'openai_tone', wp_unslash( $tone ) );
 		update_option( 'openai_selected_categories', $selected_categories );
 
 	}
 
-	$categories          = get_categories( array( 'hide_empty' => false ) );
 	$selected_categories = get_option( 'openai_selected_categories', array() );
-	$openai_tone         = get_option( 'openai_tone', 'default' );
-	$keywords            = get_option( 'openai_keywords', '' );
-	$schedule_info       = get_openai_event_schedule();
-	$selected_value      = get_option( 'openai_tone' ); // Obter o valor atualmente selecionado
 
+	$keywords      = get_option( 'openai_keywords', '' );
+	$schedule_info = get_openai_event_schedule();
+	$tone          = get_option( 'openai_tone', '' );
+	if ( get_option( 'custom_tone' ) != '' ) {
+		$custom_tone_value = get_option( 'custom_tone' );
+	} else {
+		$custom_tone_value = '';
+	}
 
 	if ( $schedule_info ) {
 		echo '<div class="notice notice-info">
@@ -61,49 +106,18 @@ function abcc_openai_text_settings_page() {
 	  		</div>';
 	}
 
+	$tones = array(
+		'default'  => 'Use a default tone',
+		'business' => 'Business-oriented',
+		'academic' => 'Academic',
+		'funny'    => 'Funny',
+		'epic'     => 'Epic',
+		'personal' => 'Personal',
+		'custom'   => 'Custom',
+	);
 	?>
-
-	<style>
-		.abcc-settings-wrapper .postbox {
-			margin-bottom: 20px;
-		}
-
-		.abcc-settings-wrapper .postbox h2 {
-			border-bottom: 1px solid #eee;
-			padding: 10px;
-		}
-
-		.abcc-settings-wrapper .postbox .inside {
-			padding: 10px 20px;
-		}
-
-		.abcc-settings-wrapper .form-table th {
-			width: 20%;
-		}
-
-		.abcc-settings-wrapper .form-table td {
-			padding: 10px 0;
-		}
-
-		.abcc-settings-wrapper .form-table input[type="text"],
-		.abcc-settings-wrapper .form-table textarea {
-			width: 100%;
-		}
-
-		.abcc-settings-wrapper .form-table input[type="checkbox"] {
-			margin-right: 5px;
-		}
-
-		.abcc-settings-wrapper .form-table .description {
-			margin-top: 5px;
-			display: block;
-		}
-
-		.abcc-settings-wrapper .submit {
-			padding: 10px 20px;
-		}
-	</style>
 	<div class="wrap">
+
 		<h1><?php echo esc_html__( 'OpenAI Blog Post Generator', 'automated-blog-content-creator' ); ?></h1>
 		<div id="poststuff">
 			<div id="post-body" class="metabox-holder columns-2">
@@ -127,28 +141,23 @@ function abcc_openai_text_settings_page() {
 											</td>
 										</tr>
 										<tr>
-											<th scope="row"><label for="openai_tone">
+											<th scope="row">
+												<label for="openai_tone">
 													<?php echo esc_html__( 'Tone you want to use:', 'automated-blog-content-creator' ); ?>
-												</label></th>
+												</label>
+											</th>
 											<td>
-												<input type="radio" id="default" name="openai_tone" value="default" <?php echo ( $selected_value == 'default' ) ? 'checked' : ''; ?>>
-												<label for="default">Use a default tone</label>
+												<?php foreach ( $tones as $value => $label ) : ?>
+													<input type="radio" id="<?php echo esc_attr( $value ); ?>"
+														name="openai_tone" value="<?php echo esc_attr( $value ); ?>" <?php echo ( $tone == $value ) ? 'checked' : ''; ?>>
+													<label
+														for="<?php echo esc_attr( $value ); ?>"><?php echo esc_attr( $label ); ?></label>
+												<?php endforeach; ?>
 
-												<input type="radio" id="business" name="openai_tone" value="business" <?php echo ( $selected_value == 'business' ) ? 'checked' : ''; ?>>
-												<label for="business">Business-oriented</label>
-
-												<input type="radio" id="academic" name="openai_tone" value="academic" <?php echo ( $selected_value == 'academic' ) ? 'checked' : ''; ?>>
-												<label for="academic">Academic</label>
-
-												<input type="radio" id="funny" name="openai_tone" value="funny" <?php echo ( $selected_value == 'funny' ) ? 'checked' : ''; ?>>
-												<label for="Funny">Funny</label>
-
-												<input type="radio" id="epic" name="openai_tone" value="epic" <?php echo ( $selected_value == 'epic' ) ? 'checked' : ''; ?>>
-												<label for="epic">Epic</label>
-
-												<input type="radio" id="personal" name="openai_tone" value="personal" <?php echo ( $selected_value == 'personal' ) ? 'checked' : ''; ?>>
-												<label for="personal">Personal</label>
-
+												<!-- Custom Tone Input Field -->
+												<input type="text" id="custom_tone" name="custom_tone"
+													value="<?php echo esc_attr( $custom_tone_value ); ?>" <?php echo ( $tone == $value ) ? 'checked' : ''; ?>
+													style="<?php echo ( 'custom' == $tone ) ? '' : 'display:none;'; ?>">
 											</td>
 										</tr>
 										<tr>
@@ -156,14 +165,7 @@ function abcc_openai_text_settings_page() {
 													<?php echo esc_html__( 'Select Categories:', 'automated-blog-content-creator' ); ?>
 												</label></th>
 											<td>
-												<?php foreach ( $categories as $category ) { ?>
-													<label>
-														<input type="checkbox" name="openai_selected_categories[]"
-															value="<?php echo esc_attr( $category->term_id ); ?>" <?php checked( in_array( $category->term_id, $selected_categories ) ); ?>>
-														<?php echo esc_html( $category->name ); ?>
-													</label>
-													<br>
-												<?php } ?>
+												<?php wpai_category_dropdown( $selected_categories ); ?>
 											</td>
 										</tr>
 									</table>
@@ -183,38 +185,15 @@ function abcc_openai_text_settings_page() {
 		</div>
 	</div>
 
-	<script>
-		(function ($) {
-			$('#generate-post').on('click', function () {
-				var $btn = $(this);
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: ajaxurl,
-					method: 'POST',
-					data: {
-						action: 'openai_generate_post',
-						_ajax_nonce: $('#abcc_openai_nonce').val(),
-					},
-					success: function (response) {
-						alert(response.data);
-					},
-					error: function (xhr) {
-						alert('<?php echo esc_js( 'Error generating post:', 'automated-blog-content-creator' ); ?> ' + xhr.responseText);
-					},
-					complete: function () {
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-		})(jQuery);
-	</script>
-
 	<?php
 }
+/**
+ * The function abcc_openai_blog_post_options_page() is used to display and handle options for an
+ * OpenAI blog post generator plugin in WordPress.
+ */
 function abcc_openai_blog_post_options_page() {
 
-	if ( isset( $_POST['submit'], $_POST['abcc_openai_nonce'] ) && wp_verify_nonce( $_POST['abcc_openai_nonce'], 'abcc_openai_generate_post' ) ) {
+	if ( isset( $_POST['submit'], $_POST['abcc_openai_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['abcc_openai_nonce'] ), 'abcc_openai_generate_post' ) ) {
 		$api_key                    = isset( $_POST['openai_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_api_key'] ) ) : '';
 		$gemini_api_key             = isset( $_POST['gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['gemini_api_key'] ) ) : '';
 		$auto_create                = isset( $_POST['openai_auto_create'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_auto_create'] ) ) : '';
@@ -232,8 +211,8 @@ function abcc_openai_blog_post_options_page() {
 
 	$api_key                    = get_option( 'openai_api_key', '' );
 	$gemini_api_key             = get_option( 'gemini_api_key', '' );
-	$auto_create                = get_option( 'openai_auto_create', 'none' ); // Default to 'none'
-	$prompt_select              = get_option( 'prompt_select', 'openai' ); // Default to 'openai'
+	$auto_create                = get_option( 'openai_auto_create', 'none' );
+	$prompt_select              = get_option( 'prompt_select', 'openai' );
 	$char_limit                 = get_option( 'openai_char_limit', 200 );
 	$openai_email_notifications = get_option( 'openai_email_notifications', false );
 
@@ -251,47 +230,6 @@ function abcc_openai_blog_post_options_page() {
 	}
 	?>
 
-	<style>
-		.abcc-settings-wrapper .postbox {
-			margin-bottom: 20px;
-		}
-
-		.abcc-settings-wrapper .postbox h2 {
-			border-bottom: 1px solid #eee;
-			padding: 10px;
-		}
-
-		.abcc-settings-wrapper .postbox .inside {
-			padding: 10px 20px;
-		}
-
-		.abcc-settings-wrapper .form-table th {
-			width: 20%;
-		}
-
-		.abcc-settings-wrapper .form-table td {
-			padding: 10px 0;
-		}
-
-		.abcc-settings-wrapper .form-table input[type="text"],
-		.abcc-settings-wrapper .form-table textarea {
-			width: 100%;
-		}
-
-		.abcc-settings-wrapper .form-table input[type="checkbox"] {
-			margin-right: 5px;
-		}
-
-		.abcc-settings-wrapper .form-table .description {
-			margin-top: 5px;
-			display: block;
-		}
-
-		.abcc-settings-wrapper .submit {
-			padding: 10px 20px;
-		}
-	</style>
-
 	<div class="wrap">
 		<h1><?php echo esc_html__( 'OpenAI Blog Post Generator', 'automated-blog-content-creator' ); ?></h1>
 		<div id="poststuff">
@@ -307,7 +245,8 @@ function abcc_openai_blog_post_options_page() {
 								<div class="inside">
 									<table class="form-table">
 										<?php
-										if ( ! defined( 'OPENAI_API' ) ) { ?>
+										if ( ! defined( 'OPENAI_API' ) ) {
+											?>
 											<tr>
 												<th scope="row"><label for="openai_api_key">
 														<?php echo esc_html__( 'OpenAI API key:', 'automated-blog-content-creator' ); ?>
@@ -324,9 +263,11 @@ function abcc_openai_blog_post_options_page() {
 											echo '<tr><th colspan="2">';
 											echo '<strong>Your OpenAI API key is already set in wp-config.php.</strong>';
 											echo '</tr></th><td></td>';
-										} ?>
+										}
+										?>
 										<?php
-										if ( ! defined( 'GEMINI_API' ) ) { ?>
+										if ( ! defined( 'GEMINI_API' ) ) {
+											?>
 											<tr>
 												<th scope="row"><label for="gemini_api_key">
 														<?php echo esc_html__( 'Gemini API key:', 'automated-blog-content-creator' ); ?>
@@ -343,7 +284,8 @@ function abcc_openai_blog_post_options_page() {
 											echo '<tr><th colspan="2">';
 											echo '<strong>Your Gemini API key is already set in wp-config.php.</strong>';
 											echo '</tr></th><td></td>';
-										} ?>
+										}
+										?>
 										<tr>
 											<th scope="row"><label for="openai_api_key">
 													<?php echo esc_html__( 'Which engine will you use to create the prompt?', 'automated-blog-content-creator' ); ?>
