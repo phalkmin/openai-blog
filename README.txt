@@ -1,4 +1,4 @@
-=== WP-AutoInsight - (former Automated Blog Content Creator) ===
+=== WP-AutoInsight ===
 Contributors: phalkmin
 Tags: openai, geminiai, blog, post, generator
 Requires at least: 5.8
@@ -58,6 +58,12 @@ You can manually generate a blog post by clicking the "Create post manually" but
 2. Example generated blog post using Gutenberg blocks.
 
 == Changelog ==
+
+= 1.5 =
+- Changed
+    - Code linting and cleanup;
+    - Better form usability;
+    - Minor quality of life changes;
 
 = 1.4 =
 - Added
