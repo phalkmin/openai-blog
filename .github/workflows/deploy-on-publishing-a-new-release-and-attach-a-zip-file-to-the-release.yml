@@ -14,7 +14,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      
+
     - name: WordPress Plugin Deploy
 
       id: gattai-deploy
@@ -23,7 +23,7 @@ jobs:
 
       with:
         generate-zip: true
-        dry-run: false
+        dry-run: true
 
       # Steps can also set environment variables which can be configured in the Github settings for the
       # repository. Here, we are using action secrets SVN_USERNAME, SVN_PASSWORD, and PLUGIN_SLUG which
