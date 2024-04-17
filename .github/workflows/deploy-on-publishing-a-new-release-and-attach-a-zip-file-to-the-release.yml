@@ -1,9 +1,10 @@
 name: Deploy to WordPress.org Repository
 
 on:
+  workflow_dispatch:
   release:
     types: [released]
-
+  
 # A list of jobs involved in this workflow.
 jobs:
   deploy_to_wp_repository:
