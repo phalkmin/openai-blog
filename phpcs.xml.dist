@@ -1,17 +1,15 @@
 <?xml version="1.0"?>
-
-<file>admin.php</file>
-<file>auto-post.php</file>
-<file>gpt.php</file>
-
 <ruleset name="Project Rules">
-	<rule ref="WordPress">
-	<!-- Any of `WordPress|WordPress-Core|WordPress-Docs|WordPress-Extra|WordPress-VIP-Go|WordPressVIPMinimum|10up-Default` -->
-		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
-		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+    <file>admin.php</file>
+    <file>auto-post.php</file>
+    <file>gpt.php</file>
+    <rule ref="WordPress">
+        <!-- Any of `WordPress|WordPress-Core|WordPress-Docs|WordPress-Extra|WordPress-VIP-Go|WordPressVIPMinimum|10up-Default` -->
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
         <exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop" />
         <exclude name="Generic.Commenting.DocComment.LongNotCapital" />
         <exclude name="Squiz.Commenting.FunctionComment.Missing" />
         <exclude name="Squiz.Commenting.FunctionComment.Missing" />
-	</rule>
+    </rule>
 </ruleset>
