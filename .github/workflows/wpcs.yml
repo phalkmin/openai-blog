@@ -19,7 +19,6 @@ jobs:
           extra_args: "--report-json=./phpcs.json"
           standard: "WordPress-Extra"
           use_local_config: "true"
-
       - name: Update summary
         run: |
           npm i -g github:10up/phpcs-json-to-md
