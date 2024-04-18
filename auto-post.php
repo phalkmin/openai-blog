@@ -11,6 +11,8 @@
  * @package WP-AutoInsight
  */
 
+define( 'VERSION', filemtime( plugins_url( '/auto-post.php', __FILE__ ) ) );
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -25,9 +27,9 @@ require plugin_dir_path( __FILE__ ) . 'gpt.php';
  * library, for the WordPress admin area.
  */
 function abcc_enqueue_scripts() {
-	wp_enqueue_style( 'select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0-rc.0' );
-	wp_enqueue_script( 'select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'jquery', '4.1.0-rc.0' );
-	wp_enqueue_style( 'abcc-admin-style', plugins_url( '/css/admin-style.css', __FILE__ ) );
+	wp_enqueue_style( 'select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0-rc.0', true );
+	wp_enqueue_script( 'select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'jquery', '4.1.0-rc.0', true );
+	wp_enqueue_style( 'abcc-admin-style', plugins_url( '/css/admin-style.css', __FILE__ ), array(), VERSION, true );
 	wp_enqueue_script( 'abcc-admin-script', plugins_url( '/js/admin-script.js', __FILE__ ), array( 'jquery' ), '1.0', true );
 }
 add_action( 'admin_enqueue_scripts', 'abcc_enqueue_scripts' );
@@ -38,7 +40,7 @@ add_action( 'admin_enqueue_scripts', 'abcc_enqueue_scripts' );
 /**
  * The function abcc_create_block creates a WordPress block with specified attributes and content.
  *
- * @param string $block_name The `block_name` parameter in the `abcc_create_block` function is used to specify
+ * @param string $block_name The `block_name` parameter in the `abcc_create_block` function is used to specify.
  * the name of the block that you want to create. This could be the name of a custom block that you
  * have registered in WordPress or a core block like 'paragraph', 'heading', 'image', etc
  * @param array  $attributes The `abcc_create_block` function you provided is used to create a block in
