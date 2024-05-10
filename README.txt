@@ -2,8 +2,8 @@
 Contributors: phalkmin
 Tags: openai, geminiai, blog, post, generator
 Requires at least: 5.8
-Tested up to: 6.4
-Stable tag: 1.4
+Tested up to: 6.5
+Stable tag: 1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,14 @@ You can manually generate a blog post by clicking the "Create post manually" but
 2. Example generated blog post using Gutenberg blocks.
 
 == Changelog ==
+
+= 1.6 =
+- Fixed
+    - Select2;
+	- Tone Select keeping custom value saved;
+- Added
+    - Minor description of some options;
+	- Ko-fi button
 
 = 1.5 =
 - Changed

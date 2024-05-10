@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP-AutoInsight
  * Description: Create blog posts automatically using the OpenAI and Gemini APIs!
- * Version: 1.5
+ * Version: 1.6
  * Author: Paulo H. Alkmin
  * Author URI: https://phalkmin.me/
  * Text Domain: automated-wordpress-content-creator
@@ -11,7 +11,7 @@
  * @package WP-AutoInsight
  */
 
-define( 'VERSION', filemtime( plugins_url( '/auto-post.php', __FILE__ ) ) );
+define( 'VERSION', filemtime( plugin_dir_path( '/auto-post.php', __FILE__ ) ) );
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -27,10 +27,10 @@ require plugin_dir_path( __FILE__ ) . 'gpt.php';
  * library, for the WordPress admin area.
  */
 function abcc_enqueue_scripts() {
-	wp_enqueue_style( 'select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0-rc.0', true );
-	wp_enqueue_script( 'select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'jquery', '4.1.0-rc.0', true );
+	wp_enqueue_style( 'select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0-rc.0' );
+	wp_enqueue_script( 'select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'jquery', '4.1.0-rc.0' );
 	wp_enqueue_style( 'abcc-admin-style', plugins_url( '/css/admin-style.css', __FILE__ ), array(), VERSION, true );
-	wp_enqueue_script( 'abcc-admin-script', plugins_url( '/js/admin-script.js', __FILE__ ), array( 'jquery' ), '1.0', true );
+	wp_enqueue_script( 'abcc-admin-script', plugins_url( '/js/admin-script.js', __FILE__ ), array( 'jquery' ), VERSION, true );
 }
 add_action( 'admin_enqueue_scripts', 'abcc_enqueue_scripts' );
 
@@ -78,12 +78,12 @@ function abcc_create_blocks( $text_array ) {
 	foreach ( $text_array as $item ) {
 		if ( ! empty( $item ) ) {
 			$block    = array(
-				'name' => 'paragraph',
+				'name'       => 'paragraph',
 				'attributes' => array(
-					'align' => 'left',
+					'align'            => 'left',
 					'custom_attribute' => 'value',
 				),
-				'content' => wp_kses_post( $item ),
+				'content'    => wp_kses_post( $item ),
 			);
 			$blocks[] = $block;
 		}
@@ -170,7 +170,7 @@ function abcc_openai_generate_post( $api_key, $keywords, $tone = 'default', $aut
 	$prompt .= __( '. Use only HTML for the content, no need to add <article> or extra tags. Use <h1> for the title in the beginning. There is no need to add sections like category, keywords, etc. I just need the content that will be used on the article.', 'automated-blog-content-creator' );
 
 	if ( ! empty( $category_names ) ) {
-		$prompt .= __( ' and in the following categories: "', 'automated-blog-content-creator' ) . implode( ', ', $category_names ) . '"';
+		$prompt    .= __( ' and in the following categories: "', 'automated-blog-content-creator' ) . implode( ', ', $category_names ) . '"';
 		$cat_images = __( 'Emphasize on: "', 'automated-blog-content-creator' ) . implode( ', ', $category_names ) . __( '" and other relevant visual elements.', 'automated-blog-content-creator' );
 	}
 
@@ -200,11 +200,11 @@ function abcc_openai_generate_post( $api_key, $keywords, $tone = 'default', $aut
 	$post_content   = abcc_gutenberg_blocks( $format_content );
 
 	$post_data = array(
-		'post_title' => $title,
-		'post_content' => wp_kses_post( $post_content ),
-		'post_status' => 'draft',
-		'post_author' => 1,
-		'post_type' => 'post',
+		'post_title'    => $title,
+		'post_content'  => wp_kses_post( $post_content ),
+		'post_status'   => 'draft',
+		'post_author'   => 1,
+		'post_type'     => 'post',
 		'post_category' => get_option( 'openai_selected_categories', array() ),
 
 	);
@@ -251,8 +251,8 @@ function get_openai_event_schedule() {
 
 	return array(
 		'scheduled' => true,
-		'schedule' => $schedule,
-		'next_run' => date_i18n( 'Y-m-d H:i:s', $timestamp ),
+		'schedule'  => $schedule,
+		'next_run'  => date_i18n( 'Y-m-d H:i:s', $timestamp ),
 		'timestamp' => $timestamp,
 	);
 }

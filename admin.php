@@ -49,14 +49,13 @@ add_action( 'admin_menu', 'abcc_add_subpages_to_menu' );
  */
 function wpai_category_dropdown( $selected_categories = array() ) {
 	$categories = get_categories( array( 'hide_empty' => 0 ) );
-	echo '<select class="wpai-category-select" name="openai_selected_categories[]" multiple="multiple" style="width:100%;">';
+	echo '<select id="openai_selected_categories" class="wpai-category-select" name="openai_selected_categories[]" multiple style="width:100%;">';
 	foreach ( $categories as $category ) {
 		$selected = in_array( $category->term_id, $selected_categories ) ? ' selected="selected"' : '';
 		echo '<option value="' . esc_attr( $category->term_id ) . '"' . esc_html( $selected ) . '>' . esc_html( $category->name ) . '</option>';
 	}
 	echo '</select>';
 }
-
 
 /**
  * The function `abcc_openai_text_settings_page` is used to display and handle settings for an OpenAI
@@ -75,8 +74,10 @@ function abcc_openai_text_settings_page() {
 			if ( 'custom' === $openai_tone ) {
 				$custom_tone = isset( $_POST['custom_tone'] ) ? sanitize_text_field( wp_unslash( $_POST['custom_tone'] ) ) : '';
 				update_option( 'custom_tone', $custom_tone );
-			}
+			} else {
+				update_option( 'custom_tone', '' );
 
+			}
 			update_option( 'openai_tone', $openai_tone );
 		}
 
@@ -117,7 +118,6 @@ function abcc_openai_text_settings_page() {
 	);
 	?>
 	<div class="wrap">
-
 		<h1><?php echo esc_html__( 'OpenAI Blog Post Generator', 'automated-blog-content-creator' ); ?></h1>
 		<div id="poststuff">
 			<div id="post-body" class="metabox-holder columns-2">
@@ -136,8 +136,9 @@ function abcc_openai_text_settings_page() {
 													<?php echo esc_html__( 'Subjects / Keywords that blog posts should be about:', 'automated-blog-content-creator' ); ?>
 												</label></th>
 											<td>
-												<textarea id="openai_keywords" name="openai_keywords"
-													rows="4"><?php echo esc_textarea( $keywords ); ?></textarea>
+												<textarea rows="4" cols="50" id="openai_keywords" name="openai_keywords"><?php echo esc_textarea( $keywords ); ?></textarea>
+												<p class="description">Write a list of keywords that will be used on the prompt. Do note write the whole prompt.</p>
+
 											</td>
 										</tr>
 										<tr>
@@ -153,8 +154,6 @@ function abcc_openai_text_settings_page() {
 													<label
 														for="<?php echo esc_attr( $value ); ?>"><?php echo esc_attr( $label ); ?></label>
 												<?php endforeach; ?>
-
-												<!-- Custom Tone Input Field -->
 												<input type="text" id="custom_tone" name="custom_tone"
 													value="<?php echo esc_attr( $custom_tone_value ); ?>" <?php echo ( $tone == $value ) ? 'checked' : ''; ?>
 													style="<?php echo ( 'custom' == $tone ) ? '' : 'display:none;'; ?>">
@@ -184,7 +183,11 @@ function abcc_openai_text_settings_page() {
 			<br class="clear">
 		</div>
 	</div>
-
+	<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			jQuery(".wpai-category-select").select2();
+		});
+	</script>
 	<?php
 }
 /**
@@ -319,6 +322,8 @@ function abcc_openai_blog_post_options_page() {
 														<?php esc_html_e( 'Weekly', 'automated-blog-content-creator' ); ?>
 													</option>
 												</select>
+												<p class="description">You can disable the automatic creation of posts or schedule as you wish</p>
+
 											</td>
 										</tr>
 										<tr>
@@ -326,8 +331,9 @@ function abcc_openai_blog_post_options_page() {
 													<?php echo esc_html__( 'Max Token Limit', 'automated-blog-content-creator' ); ?>
 												</label></th>
 											<td>
-												<input type="number" id="openai_char_limit" name="openai_char_limit"
-													value="<?php echo esc_attr( $char_limit ); ?>" min="1">
+												<input type="number" id="openai_char_limit" name="openai_char_limit" value="<?php echo esc_attr( $char_limit ); ?>" min="1">
+												<p class="description">The maximum number of tokens (words and characters) will be used by the AI during post generation. Range: 1-4096</p>
+
 											</td>
 										</tr>
 										<tr>
@@ -354,6 +360,8 @@ function abcc_openai_blog_post_options_page() {
 				</div>
 			</div>
 			<br class="clear">
+			I can update this plugin faster with your help 👉🏼👈🏼
+			<a href='https://ko-fi.com/U7U1LM8AP' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi3.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 		</div>
 	</div>
 	<?php

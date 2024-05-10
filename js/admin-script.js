@@ -11,10 +11,6 @@ jQuery(document).ready(function ($) {
   // Trigger the change event to set the initial visibility state
   $('input[type="radio"][name="openai_tone"]:checked').change();
 
-  // Apply select2 to category select input for improved UX
-  $(".wpai-category-select").select2();
-  $(".wpai-category-select").trigger("change");
-
   // Event listener for generate post button
   $("#generate-post").on("click", function () {
     var $btn = $(this);
@@ -38,8 +34,4 @@ jQuery(document).ready(function ($) {
       },
     });
   });
-});
-
-jQuery(document).ajaxComplete(function () {
-  $(".wpai-category-select").select2();
 });

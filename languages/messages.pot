@@ -1,0 +1,81 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-08 18:28-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: admin.php:17 admin.php:18
+msgid "WP-AutoInsight"
+msgstr ""
+
+#: admin.php:26 admin.php:27
+msgid "Text Settings"
+msgstr ""
+
+#: admin.php:35 admin.php:36
+msgid "Advanced Settings"
+msgstr ""
+
+#: auto-post.php:154
+msgid "My work is to create well-optimized SEO articles for the site "
+msgstr ""
+
+#: auto-post.php:156
+msgid " with the URL "
+msgstr ""
+
+#: auto-post.php:159
+msgid " and this meta description: \""
+msgstr ""
+
+#: auto-post.php:162
+msgid ""
+"I need you to assume the persona of a web content writer with a strong focus "
+"on SEO and create an article for the website I specified. "
+msgstr ""
+
+#: auto-post.php:164
+msgid "The article should focus on the following keywords: \""
+msgstr ""
+
+#: auto-post.php:166
+msgid ". Use the following tone: "
+msgstr ""
+
+#: auto-post.php:168
+msgid ""
+". Use only HTML for the content, no need to add <article> or extra tags. Use "
+"<h1> for the title in the beginning. There is no need to add sections like "
+"category, keywords, etc. I just need the content that will be used on the "
+"article."
+msgstr ""
+
+#: auto-post.php:171
+msgid " and in the following categories: \""
+msgstr ""
+
+#: auto-post.php:172
+msgid "Emphasize on: \""
+msgstr ""
+
+#: auto-post.php:172
+msgid "\" and other relevant visual elements."
+msgstr ""
+
+#: auto-post.php:177
+#, php-format
+msgid "Draw images representing %1$s. %2$s Visit %3$s for inspiration."
+msgstr ""
