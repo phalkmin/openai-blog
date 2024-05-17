@@ -11,11 +11,12 @@
  * @package WP-AutoInsight
  */
 
-define( 'VERSION', filemtime( plugin_dir_path( '/auto-post.php', __FILE__ ) ) );
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
+
+define( 'VERSION', filemtime( plugin_dir_path( '/auto-post.php', __FILE__ ) ) );
+
 
 require_once __DIR__ . '/vendor/autoload.php';
 require plugin_dir_path( __FILE__ ) . 'admin.php';
@@ -28,14 +29,44 @@ require plugin_dir_path( __FILE__ ) . 'gpt.php';
  */
 function abcc_enqueue_scripts() {
 	wp_enqueue_style( 'select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0-rc.0' );
-	wp_enqueue_script( 'select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'jquery', '4.1.0-rc.0' );
+	wp_enqueue_script( 'select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', 'jquery', '4.1.0-rc.0', true );
 	wp_enqueue_style( 'abcc-admin-style', plugins_url( '/css/admin-style.css', __FILE__ ), array(), VERSION, true );
 	wp_enqueue_script( 'abcc-admin-script', plugins_url( '/js/admin-script.js', __FILE__ ), array( 'jquery' ), VERSION, true );
 }
 add_action( 'admin_enqueue_scripts', 'abcc_enqueue_scripts' );
 
 
+function abcc_check_api_key() {
+	$prompt_select = get_option( 'prompt_select' );
 
+	if ( 'openai' === $prompt_select ) {
+		if ( defined( 'OPENAI_API' ) ) {
+			$api_key = OPENAI_API;
+		} else {
+			$openai_api_key = get_option( 'openai_api_key', '' );
+			if ( ! empty( $openai_api_key ) ) {
+				$api_key = $openai_api_key;
+			} else {
+				$api_key = '';
+			}
+		}
+	} elseif ( 'gemini' === $prompt_select ) {
+		if ( defined( 'GEMINI_API' ) ) {
+			$api_key = GEMINI_API;
+		} else {
+			$gemini_api_key = get_option( 'gemini_api_key', '' );
+			if ( ! empty( $gemini_api_key ) ) {
+				$api_key = $gemini_api_key;
+			} else {
+				$api_key = '';
+			}
+		}
+	} else {
+		$api_key = '';
+	}
+
+	return $api_key;
+}
 
 /**
  * The function abcc_create_block creates a WordPress block with specified attributes and content.
@@ -64,7 +95,7 @@ function abcc_create_block( $block_name, $attributes = array(), $content = '' ) 
  * The function `abcc_create_blocks` creates an array of paragraph blocks with specified attributes
  * from a given array of text items.
  *
- * @param string $text_array The `abcc_create_blocks` function takes an array of text items as input and
+ * @param array $text_array The `abcc_create_blocks` function takes an array of text items as input and
  * creates an array of blocks based on each text item. Each block has a predefined structure with a
  * name, attributes, and content.
  *
@@ -121,6 +152,9 @@ function abcc_gutenberg_blocks( $blocks = array() ) {
  *  OpenAI's models and tools. Make
  * @param string  $keywords The `abcc_openai_generate_post` function generates a new post for a WordPress site
  *  using OpenAI or Gemini API. Here's an explanation of the parameters:
+ * @param string  $prompt_select The `prompt_select` parameter in the `abcc_openai_generate_post` function
+ *  determines whether to use OpenAI or Gemini for generating text content. It is used to select the
+ *  service that will be responsible for generating the article content based on the provided prompt.
  * @param string  $tone The `tone` parameter in the `abcc_openai_generate_post` function is used to specify the
  *  tone or style of writing for the generated article. It defaults to 'default', but you can provide
  *  different tones such as formal, casual, professional, friendly, etc., depending on the desired voice
@@ -132,11 +166,8 @@ function abcc_gutenberg_blocks( $blocks = array() ) {
  *  the character limit for the generated post content. In this function, the default value for
  *  `char_limit` is set to 200 characters. This means that the generated post content will be limited to
  *  200 characters
- * @param string  $prompt_select The `prompt_select` parameter in the `abcc_openai_generate_post` function
- *  determines whether to use OpenAI or Gemini for generating text content. It is used to select the
- *  service that will be responsible for generating the article content based on the provided prompt.
  */
-function abcc_openai_generate_post( $api_key, $keywords, $tone = 'default', $auto_create = false, $char_limit = 200, $prompt_select ) {
+function abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone = 'default', $auto_create = false, $char_limit = 200 ) {
 
 	$selected_categories = get_option( 'openai_selected_categories', array() );
 	$category_names      = array();
@@ -174,6 +205,8 @@ function abcc_openai_generate_post( $api_key, $keywords, $tone = 'default', $aut
 		$cat_images = __( 'Emphasize on: "', 'automated-blog-content-creator' ) . implode( ', ', $category_names ) . __( '" and other relevant visual elements.', 'automated-blog-content-creator' );
 	}
 
+	$prompt .= __( ' Keep the article under: ', 'automated-blog-content-creator' ) . $char_limit . __( ' tokens.', 'automated-blog-content-creator' );
+
 	$prompt_images = sprintf(
 		// translators: %1$s is a list of keywords, %2$s is a string representing category images, %3$s is the site URL.
 		__( 'Draw images representing %1$s. %2$s Visit %3$s for inspiration.', 'automated-blog-content-creator' ),
@@ -181,10 +214,10 @@ function abcc_openai_generate_post( $api_key, $keywords, $tone = 'default', $aut
 		$cat_images,
 		$site_url
 	);
-	if ( 'openai' == $prompt_select ) {
+	if ( 'openai' === $prompt_select ) {
 		$text   = abcc_openai_generate_text( $api_key, $prompt, $char_limit );
 		$images = abcc_openai_generate_images( $api_key, $prompt_images, 1 );
-	} elseif ( 'gemini' == $prompt_select ) {
+	} elseif ( 'gemini' === $prompt_select ) {
 		$text = abcc_gemini_generate_text( $api_key, $prompt, $char_limit );
 	}
 
@@ -221,6 +254,11 @@ function abcc_openai_generate_post( $api_key, $keywords, $tone = 'default', $aut
 	}
 	if ( ! empty( $images ) ) {
 		foreach ( $images as $image_url ) {
+			if ( ! function_exists( 'media_sideload_image' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/media.php';
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+				require_once ABSPATH . 'wp-admin/includes/image.php';
+			}
 			$attachment_id = media_sideload_image( $image_url, $post_id, null, 'id' );
 
 			if ( is_wp_error( $attachment_id ) ) {
@@ -266,17 +304,18 @@ function get_openai_event_schedule() {
  * - The OpenAI auto-create option is false
  */
 function abcc_openai_generate_post_scheduled() {
-	$api_key     = get_option( 'openai_api_key', '' );
-	$keywords    = explode( "\n", get_option( 'openai_keywords', '' ) );
-	$tone        = get_option( 'openai_tone', 'default' );
-	$auto_create = get_option( 'openai_auto_create', 'none' );
-	$char_limit  = get_option( 'openai_char_limit', 200 );
+	$api_key       = abcc_check_api_key();
+	$keywords      = explode( "\n", get_option( 'openai_keywords', '' ) );
+	$tone          = get_option( 'openai_tone', 'default' );
+	$auto_create   = get_option( 'openai_auto_create', 'none' );
+	$char_limit    = get_option( 'openai_char_limit', 200 );
+	$prompt_select = get_option( 'prompt_select', 'openai' );
 
 	if ( empty( $api_key ) || empty( $keywords ) || 'none' === $auto_create ) {
-		return;
+		return false;
 	}
 
-	abcc_openai_generate_post( $api_key, $keywords, $tone, $auto_create, $char_limit );
+	abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone, $auto_create, $char_limit );
 }
 
 /**
@@ -308,19 +347,7 @@ add_action( 'abcc_openai_generate_post_hook', 'abcc_openai_generate_post_schedul
 function abcc_openai_generate_post_ajax() {
 
 	check_ajax_referer( 'abcc_openai_generate_post' );
-
-	if ( defined( 'OPENAI_API' ) && get_option( 'prompt_select' ) == 'openai' ) {
-		$api_key = OPENAI_API;
-	} elseif ( ! empty( get_option( 'openai_api_key' ) ) && get_option( 'prompt_select' ) == 'openai' ) {
-		$api_key = get_option( 'openai_api_key', '' );
-	} elseif ( defined( 'GEMINI_API' ) && get_option( 'prompt_select' ) == 'gemini' ) {
-		$api_key = GEMINI_API;
-	} elseif ( ! empty( get_option( 'gemini_api_key' ) ) && get_option( 'prompt_select' ) == 'gemini' ) {
-		$api_key = get_option( 'gemini_api_key', '' );
-	} else {
-		$api_key = '';
-	}
-
+	$api_key       = abcc_check_api_key();
 	$keywords      = explode( "\n", get_option( 'openai_keywords', '' ) );
 	$char_limit    = get_option( 'openai_char_limit', 200 );
 	$tone          = get_option( 'openai_tone', 'default' );
@@ -330,7 +357,7 @@ function abcc_openai_generate_post_ajax() {
 		wp_send_json_error( esc_html__( 'API Key, Prompt Engine or keywords not set.', 'automated-blog-content-creator' ) );
 	}
 
-	abcc_openai_generate_post( $api_key, $keywords, $tone, false, $char_limit, $prompt_select );
+	abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone, false, $char_limit );
 
 	wp_send_json_success( esc_html__( 'Post created successfully!', 'automated-blog-content-creator' ) );
 }
@@ -340,7 +367,7 @@ add_action( 'wp_ajax_openai_generate_post', 'abcc_openai_generate_post_ajax' );
  * This function deactivates a scheduled hook for generating posts using OpenAI in WordPress.
  */
 function abcc_openai_deactivate_plugin() {
-	wp_clear_scheduled_hook( 'openai_generate_post_hook' );
+	wp_clear_scheduled_hook( 'abcc_openai_generate_post_hook' );
 }
 register_deactivation_hook( __FILE__, 'abcc_openai_deactivate_plugin' );
 
