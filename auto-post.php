@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP-AutoInsight
  * Description: Create blog posts automatically using the OpenAI and Gemini APIs!
- * Version: 1.6
+ * Version: 1.9
  * Author: Paulo H. Alkmin
  * Author URI: https://phalkmin.me/
  * Text Domain: automated-wordpress-content-creator
@@ -22,6 +22,34 @@ require_once __DIR__ . '/vendor/autoload.php';
 require plugin_dir_path( __FILE__ ) . 'admin.php';
 require plugin_dir_path( __FILE__ ) . 'gpt.php';
 
+/**
+ * Handle API request errors.
+ *
+ * @param mixed  $response The API response.
+ * @param string $api      The API name.
+ */
+function handle_api_request_error( $response, $api ) {
+	if ( ! ( $response instanceof WP_Error ) && ! empty( $response ) ) {
+		$response = new WP_Error( 'api_error', $response );
+	}
+
+	// Error logging.
+	$error_message = 'Unknown error occurred.';
+	if ( is_wp_error( $response ) ) {
+		$error_message = $response->get_error_message();
+	}
+
+	error_log( sprintf( '%s API Request Error: %s', $api, $error_message ) );
+
+	add_settings_error(
+		'openai-settings',
+		'api-request-error',
+		// Translators: %1$s is the API name, %2$s is the error message.
+		sprintf( esc_html__( 'Error in %1$s API request: %2$s', 'automated-blog-content-creator' ), $api, $error_message ),
+		'error'
+	);
+}
+
 
 /**
  * The function `abcc_enqueue_scripts` is used to enqueue CSS and JavaScript files, including Select2
@@ -39,7 +67,7 @@ add_action( 'admin_enqueue_scripts', 'abcc_enqueue_scripts' );
 function abcc_check_api_key() {
 	$prompt_select = get_option( 'prompt_select' );
 
-	if ( 'openai' === $prompt_select ) {
+	if ( ( 'openai' === $prompt_select ) || ( 'gpt-4' === $prompt_select ) || ( 'gpt-4o' === $prompt_select ) ) {
 		if ( defined( 'OPENAI_API' ) ) {
 			$api_key = OPENAI_API;
 		} else {
@@ -214,44 +242,50 @@ function abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone =
 		$cat_images,
 		$site_url
 	);
-	if ( 'openai' === $prompt_select ) {
-		$text   = abcc_openai_generate_text( $api_key, $prompt, $char_limit );
+	if ( ( 'openai' === $prompt_select ) || ( 'gpt-4' === $prompt_select ) || ( 'gpt-4o' === $prompt_select ) ) {
+		$text   = abcc_openai_generate_text( $api_key, $prompt, $char_limit, $prompt_select );
 		$images = abcc_openai_generate_images( $api_key, $prompt_images, 1 );
 	} elseif ( 'gemini' === $prompt_select ) {
 		$text = abcc_gemini_generate_text( $api_key, $prompt, $char_limit );
 	}
 
-	foreach ( $text as $key => $value ) {
-		if ( strpos( $value, '<h1>' ) !== false && strpos( $value, '</h1>' ) !== false ) {
-			$title = str_replace( array( '<h1>', '</h1>' ), '', $value );
-			unset( $text[ $key ] );
-			break;
+	if ( ! empty( $text ) && is_array( $text ) ) {
+		foreach ( $text as $key => $value ) {
+			if ( strpos( $value, '<h1>' ) !== false && strpos( $value, '</h1>' ) !== false ) {
+				$title = str_replace( array( '<h1>', '</h1>' ), '', $value );
+				unset( $text[ $key ] );
+				break;
+			}
+		}
+
+		$format_content = abcc_create_blocks( $text );
+		$post_content   = abcc_gutenberg_blocks( $format_content );
+
+		$post_data = array(
+			'post_title'    => $title,
+			'post_content'  => wp_kses_post( $post_content ),
+			'post_status'   => 'draft',
+			'post_author'   => 1,
+			'post_type'     => 'post',
+			'post_category' => get_option( 'openai_selected_categories', array() ),
+
+		);
+
+		$post_id = wp_insert_post( $post_data );
+
+		if ( is_wp_error( $post_id ) ) {
+			handle_api_request_error( $post_id, 'WordPress' ); // Use the error handler for WordPress errors.
+		}
+
+		if ( get_option( 'openai_email_notifications', false ) ) {
+			$admin_email = get_option( 'admin_email' );
+			$subject     = esc_html__( 'New Automated Post Created', 'automated-blog-content-creator' );
+			$message     = esc_html__( 'A new post has been created automatically using OpenAI.', 'automated-blog-content-creator' );
+
+			wp_mail( $admin_email, $subject, $message );
 		}
 	}
 
-	$format_content = abcc_create_blocks( $text );
-	$post_content   = abcc_gutenberg_blocks( $format_content );
-
-	$post_data = array(
-		'post_title'    => $title,
-		'post_content'  => wp_kses_post( $post_content ),
-		'post_status'   => 'draft',
-		'post_author'   => 1,
-		'post_type'     => 'post',
-		'post_category' => get_option( 'openai_selected_categories', array() ),
-
-	);
-
-	$post_id = wp_insert_post( $post_data );
-
-	if ( get_option( 'openai_email_notifications', false ) ) {
-		$admin_email = get_option( 'admin_email' );
-		$subject     = esc_html__( 'New Automated Post Created', 'automated-blog-content-creator' );
-		$message     = esc_html__( 'A new post has been created automatically using OpenAI.', 'automated-blog-content-creator' );
-
-		// Utilize a função `wp_mail` para enviar e-mails.
-		wp_mail( $admin_email, $subject, $message );
-	}
 	if ( ! empty( $images ) ) {
 		foreach ( $images as $image_url ) {
 			if ( ! function_exists( 'media_sideload_image' ) ) {

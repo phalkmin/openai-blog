@@ -1,27 +1,26 @@
 === WP-AutoInsight ===
 Contributors: phalkmin
-Tags: openai, geminiai, blog, post, generator
+Tags: openai, geminiai, blog, post, generator, gpt4, gpt4o, gpt35, dalle3
 Requires at least: 5.8
 Tested up to: 6.5
-Stable tag: 1.6
+Stable tag: 1.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create blog posts automatically using the OpenAI and Gemini APIs!
-
 == Description ==
 
-The Automated Blog Content Creator plugin allows you to automatically generate blog posts using the power of the OpenAI API. With this plugin, you can harness the capabilities of ChatGPT to create SEO-focused articles on your WordPress site. Simply provide a set of keywords or subjects, and the plugin will generate engaging content for you.
+WP-AutoInsight revolutionizes blog content creation by using OpenAI's GPT models and the Gemini API. From crafting SEO-optimized articles to generating relevant images, this plugin automates content generation for your WordPress site!
 
 Features:
 
-- Seamless integration with the OpenAI API.
-- Automatically generates blog posts based on specified keywords.
-- Customizable character limit for generated posts.
-- Ability to generate images related to the content.
+- Integration with multiple OpenAI GPT models (GPT-3.5, GPT-4, and GPT-4o).
+- Gemini API support for alternative content generation.
+- Advanced settings to specify content generation models and customize token limits.
+- Automatic and manual blog post generation with SEO-focused keywords.
+- Dynamic image creation related to the content using OpenAI's powerful DALL-E model.
 - Supports Gutenberg blocks for easy content formatting.
-- Option for daily automatic post creation.
-- AJAX-powered manual post creation.
+- Scheduled post creation options: hourly, daily, or weekly, to keep your blog constantly updated.
+- AJAX-powered interface for immediate manual post generation.
 - Translatable strings for internationalization.
 
 == Installation ==
@@ -34,23 +33,31 @@ Features:
 
 = How do I get an OpenAI API key? =
 
-To use the OpenAI API, you need to sign up for an API key on the OpenAI website. Visit the OpenAI website and follow the instructions to obtain an API key.
+To use the OpenAI API, you need to sign up for an API key on the OpenAI website. Sign up/log in to OpenAI, go to https://platform.openai.com/api-keys, and click "Create new API key".
 
-= How can I specify the subjects or keywords for generating blog posts? =
+= How do I get an GeminiAI API key? =
 
-In the plugin settings, you can enter a list of subjects or keywords separated by line breaks. The generated blog posts will be focused on these subjects.
+To use the GeminiAI API, you'll need an API key. You can create one in Google AI Studio https://support.gemini.com/hc/en-us/articles/360031080191-How-do-I-create-an-API-key.
+
+= How do I select between different GPT models and Gemini API? =
+
+In the plugin settings, you can select your preferred AI model from GPT-3.5, GPT-4, and GPT-4o. Gemini API is also available as an alternative or supplementary option.
+
+= How can I customize the generated content? =
+
+The plugin settings allow you to specify keywords, select AI models, set the character limit, and choose content generation frequency. This customization ensures the generated posts align with your blog's theme and audience.
 
 = Can I customize the maximum character limit for generated posts? =
 
 Yes, you can specify the maximum character limit for the generated posts in the plugin settings. The default limit is 200 characters.
 
-= Can the plugin automatically create blog posts? =
+= Is it possible to schedule content generation? =
 
-Yes, the plugin provides an option for daily automatic post creation. When enabled, it will generate and save new blog posts based on the specified keywords.
+Yes, WP-AutoInsight offers flexible scheduling options. You can automate content creation on an hourly, daily, or weekly basis.
 
 = How can I manually generate a blog post? =
 
-You can manually generate a blog post by clicking the "Create post manually" button on the plugin settings page. This will trigger an AJAX request to generate a new post.
+You can manually generate a blog post by clicking the "Create post manually" button on the plugin settings page. This utilizes AJAX to generate a new post without reloading the page..
 
 == Screenshots ==
 
@@ -58,6 +65,17 @@ You can manually generate a blog post by clicking the "Create post manually" but
 2. Example generated blog post using Gutenberg blocks.
 
 == Changelog ==
+
+= 1.9 =
+- Added:
+    - Added support for selecting GPT-3.5, GPT-4 and GPT-4o models for content generation;
+    - Users of the old GPT-3.5 won't be affected by the change as there is backwards compability;
+    - Enhanced plugin settings UI for better user experience and clearer model selection;
+
+- Fixed:
+    - Code refinements for better modularity and maintainability.
+    - Comprehensive error handling and logging.
+    - Updated documentation to guide users through new features and configurations.
 
 = 1.6 =
 - Fixed

@@ -118,6 +118,7 @@ function abcc_openai_text_settings_page() {
 	);
 	?>
 	<div class="wrap">
+
 		<h1><?php echo esc_html__( 'OpenAI Blog Post Generator', 'automated-blog-content-creator' ); ?></h1>
 		<div id="poststuff">
 			<div id="post-body" class="metabox-holder columns-2">
@@ -297,6 +298,10 @@ function abcc_openai_blog_post_options_page() {
 												<select id="prompt_select" name="prompt_select">
 													<option value="openai" <?php selected( $prompt_select, 'openai' ); ?>>
 														GPT3.5 - default option</option>
+													<option value="gpt-4" <?php selected( $prompt_select, 'gpt-4' ); ?>>
+														GPT4 - Better content, cost more</option>
+													<option value="gpt-4o" <?php selected( $prompt_select, 'gpt-4o' ); ?>>
+														GPT4o - Better content, cost less</option>
 													<option value="gemini" <?php selected( $prompt_select, 'gemini' ); ?>>
 														Gemini - images won't be created</option>
 												</select>
