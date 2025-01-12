@@ -1,29 +1,27 @@
 {
-    "name": "paulo/paulo",
-    "type": "project",
-    "authors": [
-        {
-            "name": "Paulo",
-            "email": "phalkmin@gmail.com"
-        }
-    ],
-    "minimum-stability": "stable",
-    "require": {
-        "orhanerday/open-ai": "^5.0",
-        "gemini-api-php/client": "^1.4",
-        "symfony/http-client": "^6.4",
-        "nyholm/psr7": "^1.8"
-    },
-    "config": {
-                "optimize-autoloader": true,
-        "allow-plugins": {
-            "php-http/discovery": true
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "Orhanerday\\OpenAi\\": "src"
-        }
+  "name": "paulo/paulo",
+  "type": "project",
+  "authors": [
+    {
+      "name": "Paulo",
+      "email": "phalkmin@gmail.com"
     }
-    
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "gemini-api-php/client": "^1.4",
+    "symfony/http-client": "^6.4",
+    "nyholm/psr7": "^1.8"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  },
+  "autoload": {
+    "classmap": [
+      "includes/"
+    ]
+  }
 }

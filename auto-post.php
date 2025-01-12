@@ -21,6 +21,7 @@ define( 'VERSION', filemtime( plugin_dir_path( '/auto-post.php', __FILE__ ) ) );
 require_once __DIR__ . '/vendor/autoload.php';
 require plugin_dir_path( __FILE__ ) . 'admin.php';
 require plugin_dir_path( __FILE__ ) . 'gpt.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-abcc-openai-client.php';
 
 /**
  * Handle API request errors.
@@ -64,37 +65,148 @@ function abcc_enqueue_scripts() {
 add_action( 'admin_enqueue_scripts', 'abcc_enqueue_scripts' );
 
 
+/**
+ * Check and retrieve the appropriate API key based on the selected AI model.
+ *
+ * @return string The API key if found, empty string otherwise.
+ */
 function abcc_check_api_key() {
-	$prompt_select = get_option( 'prompt_select' );
+	$prompt_select = get_option( 'prompt_select', 'gpt-3.5-turbo' );
+	$api_key       = '';
 
-	if ( ( 'openai' === $prompt_select ) || ( 'gpt-4' === $prompt_select ) || ( 'gpt-4o' === $prompt_select ) ) {
-		if ( defined( 'OPENAI_API' ) ) {
-			$api_key = OPENAI_API;
-		} else {
-			$openai_api_key = get_option( 'openai_api_key', '' );
-			if ( ! empty( $openai_api_key ) ) {
-				$api_key = $openai_api_key;
-			} else {
-				$api_key = '';
-			}
+	$model_options = abcc_get_ai_model_options();
+
+	$provider = '';
+	foreach ( $model_options as $provider_key => $group ) {
+		if ( isset( $group['options'][ $prompt_select ] ) ) {
+			$provider = $provider_key;
+			break;
 		}
-	} elseif ( 'gemini' === $prompt_select ) {
-		if ( defined( 'GEMINI_API' ) ) {
-			$api_key = GEMINI_API;
-		} else {
-			$gemini_api_key = get_option( 'gemini_api_key', '' );
-			if ( ! empty( $gemini_api_key ) ) {
-				$api_key = $gemini_api_key;
-			} else {
-				$api_key = '';
-			}
-		}
-	} else {
-		$api_key = '';
+	}
+
+	switch ( $provider ) {
+		case 'openai':
+			$api_key    = defined( 'OPENAI_API' ) ? OPENAI_API : get_option( 'openai_api_key', '' );
+			$key_source = defined( 'OPENAI_API' ) ? 'constant' : 'option';
+			break;
+
+		case 'claude':
+			$api_key    = defined( 'CLAUDE_API' ) ? CLAUDE_API : get_option( 'claude_api_key', '' );
+			$key_source = defined( 'CLAUDE_API' ) ? 'constant' : 'option';
+			break;
+
+		case 'gemini':
+			$api_key    = defined( 'GEMINI_API' ) ? GEMINI_API : get_option( 'gemini_api_key', '' );
+			$key_source = defined( 'GEMINI_API' ) ? 'constant' : 'option';
+			break;
 	}
 
 	return $api_key;
 }
+
+/**
+ * Determines which image generation service to use based on settings and availability.
+ *
+ * @param string $text_model The selected text generation model
+ * @return array Array containing 'service' and 'api_key'
+ */
+function abcc_determine_image_service( $text_model ) {
+	$openai_key    = defined( 'OPENAI_API' ) ? OPENAI_API : get_option( 'openai_api_key', '' );
+	$stability_key = defined( 'STABILITY_API' ) ? STABILITY_API : get_option( 'stability_api_key', '' );
+
+	$preferred_image_service = get_option( 'preferred_image_service', 'auto' );
+
+	if ( $preferred_image_service !== 'auto' ) {
+		if ( $preferred_image_service === 'stability' && ! empty( $stability_key ) ) {
+			return array(
+				'service' => 'stability',
+				'api_key' => $stability_key,
+			);
+		}
+		if ( $preferred_image_service === 'openai' && ! empty( $openai_key ) ) {
+			return array(
+				'service' => 'openai',
+				'api_key' => $openai_key,
+			);
+		}
+	}
+
+	$model_provider = '';
+	if ( strpos( $text_model, 'gpt' ) !== false || $text_model === 'openai' ) {
+		$model_provider = 'openai';
+	} elseif ( strpos( $text_model, 'claude' ) !== false ) {
+		$model_provider = 'claude';
+	} elseif ( strpos( $text_model, 'gemini' ) !== false ) {
+		$model_provider = 'gemini';
+	}
+
+	if ( $model_provider === 'openai' && ! empty( $openai_key ) ) {
+		return array(
+			'service' => 'openai',
+			'api_key' => $openai_key,
+		);
+	} elseif ( ! empty( $stability_key ) ) {
+		return array(
+			'service' => 'stability',
+			'api_key' => $stability_key,
+		);
+	}
+
+	return array(
+		'service' => null,
+		'api_key' => null,
+	);
+}
+
+/**
+ * The function `abcc_get_available_models` retrieves available models either from cache or by making
+ * an API call and caches the result for 1 hour.
+ *
+ * @return array function `abcc_get_available_models` is returning an array of available models from the
+ * cache if available, otherwise it checks for an API key, retrieves available models using the API
+ * client, caches the models for 1 hour, and returns the models. If there is an error during the
+ * process, it returns an empty array.
+ */
+function abcc_get_available_models() {
+	$cached_models = get_transient( 'abcc_available_models' );
+	if ( false !== $cached_models ) {
+		return $cached_models;
+	}
+
+	$api_key = abcc_check_api_key();
+	if ( empty( $api_key ) ) {
+		return array();
+	}
+
+	$client = new ABCC_OpenAI_Client( $api_key );
+	$models = $client->get_available_models();
+
+	if ( ! is_wp_error( $models ) ) {
+		set_transient( 'abcc_available_models', $models, HOUR_IN_SECONDS );
+		return $models;
+	}
+
+	return array();
+}
+
+function abcc_clear_model_cache( $old_value, $new_value ) {
+	delete_transient( 'abcc_available_models' );
+}
+add_action( 'update_option_openai_custom_endpoint', 'abcc_clear_model_cache', 10, 2 );
+
+function abcc_refresh_models_ajax() {
+	check_ajax_referer( 'abcc_refresh_models' );
+
+	delete_transient( 'abcc_available_models' );
+	$models = abcc_get_available_models();
+
+	wp_send_json_success(
+		array(
+			'models' => $models,
+		)
+	);
+}
+add_action( 'wp_ajax_abcc_refresh_models', 'abcc_refresh_models_ajax' );
 
 /**
  * The function abcc_create_block creates a WordPress block with specified attributes and content.
@@ -108,7 +220,7 @@ function abcc_check_api_key() {
  * @param string $content The `abcc_create_block` function you provided is used to create a block of content
  * for the WordPress block editor. The function takes three parameters:
  *
- * @return $block_content - The function `abcc_create_block` returns a block of content in the format used by the
+ * @return string The function `abcc_create_block` returns a block of content in the format used by the
  * WordPress block editor (Gutenberg). The content includes the block name, attributes encoded as a
  * JSON string, and the block content itself enclosed in HTML comments.
  */
@@ -127,7 +239,7 @@ function abcc_create_block( $block_name, $attributes = array(), $content = '' ) 
  * creates an array of blocks based on each text item. Each block has a predefined structure with a
  * name, attributes, and content.
  *
- * @return $blocks The function `abcc_create_blocks` takes an array of text items as input, creates blocks for
+ * @return array The function `abcc_create_blocks` takes an array of text items as input, creates blocks for
  * each non-empty item, and returns an array of blocks. Each block has a name of 'paragraph',
  * attributes including alignment and a custom attribute with a value, and the content sanitized using
  * `wp_kses_post`.
@@ -158,7 +270,7 @@ function abcc_create_blocks( $text_array ) {
  * @param array $blocks The `abcc_gutenberg_blocks` function takes an array of blocks as a parameter. Each
  * block in the array should have the following structure:
  *
- * @return $block_contents The function `abcc_gutenberg_blocks` is returning the concatenated block contents generated
+ * @return string The function `abcc_gutenberg_blocks` is returning the concatenated block contents generated
  * by calling the `abcc_create_block` function for each block in the input array ``.
  */
 function abcc_gutenberg_blocks( $blocks = array() ) {
@@ -170,141 +282,360 @@ function abcc_gutenberg_blocks( $blocks = array() ) {
 }
 
 /**
- * The function `abcc_openai_generate_post` generates a new post for a WordPress site using OpenAI or
- * Gemini API based on specified keywords, tone, and other parameters, and includes content creation,
- * image generation, and post creation functionalities.
+ * Generates a new post using AI services.
  *
- * @param string  $api_key The `api_key` parameter is used to authenticate and authorize access to the OpenAI
- *  API. It is a unique key provided by OpenAI that allows your application to interact with their
- *  services securely. This key is essential for making requests to generate text and images using
- *  OpenAI's models and tools. Make
- * @param string  $keywords The `abcc_openai_generate_post` function generates a new post for a WordPress site
- *  using OpenAI or Gemini API. Here's an explanation of the parameters:
- * @param string  $prompt_select The `prompt_select` parameter in the `abcc_openai_generate_post` function
- *  determines whether to use OpenAI or Gemini for generating text content. It is used to select the
- *  service that will be responsible for generating the article content based on the provided prompt.
- * @param string  $tone The `tone` parameter in the `abcc_openai_generate_post` function is used to specify the
- *  tone or style of writing for the generated article. It defaults to 'default', but you can provide
- *  different tones such as formal, casual, professional, friendly, etc., depending on the desired voice
- * @param boolean $auto_create The `auto_create` parameter in the `abcc_openai_generate_post` function is a
- * boolean parameter that determines whether the post should be automatically created or not. If set to
- * `true`, the function will automatically create a draft post based on the provided parameters. If set
- * to `false`, the
- * @param string  $char_limit The `char_limit` parameter in the `abcc_openai_generate_post` function specifies
- *  the character limit for the generated post content. In this function, the default value for
- *  `char_limit` is set to 200 characters. This means that the generated post content will be limited to
- *  200 characters
+ * @param string  $api_key        The API key for the selected service
+ * @param array   $keywords       Keywords to focus the article on
+ * @param string  $prompt_select  Which AI service to use
+ * @param string  $tone          The tone to use for the article
+ * @param boolean $auto_create   Whether this is an automated creation
+ * @param int     $char_limit    Maximum token limit
+ * @return int|WP_Error Post ID on success, WP_Error on failure
  */
 function abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone = 'default', $auto_create = false, $char_limit = 200 ) {
+	try {
+		$selected_categories = get_option( 'openai_selected_categories', array() );
+		$category_names      = array();
 
-	$selected_categories = get_option( 'openai_selected_categories', array() );
-	$category_names      = array();
-
-	foreach ( $selected_categories as $category_id ) {
-		$category = get_category( $category_id );
-		if ( $category ) {
-			$category_names[] = $category->name;
+		foreach ( $selected_categories as $category_id ) {
+			$category = get_category( $category_id );
+			if ( $category ) {
+				$category_names[] = $category->name;
+			}
 		}
-	}
 
-	$site_name        = get_bloginfo( 'name' );
-	$site_description = get_bloginfo( 'description' );
-	$site_url         = get_bloginfo( 'url' );
-	$cat_images       = '';
+		$prompt = abcc_build_content_prompt(
+			$keywords,
+			$tone,
+			$category_names,
+			$char_limit
+		);
 
-	$prompt = __( 'My work is to create well-optimized SEO articles for the site ', 'automated-blog-content-creator' ) . $site_name;
+		$text_array = abcc_generate_content(
+			$api_key,
+			$prompt,
+			$prompt_select,
+			$char_limit
+		);
 
-	$prompt .= __( ' with the URL ', 'automated-blog-content-creator' ) . $site_url;
+		if ( empty( $text_array ) ) {
+			throw new Exception( 'Content generation failed - no text received from AI service' );
+		}
 
-	if ( $site_description ) {
-		$prompt .= __( ' and this meta description: "', 'automated-blog-content-creator' ) . $site_description . '"';
-	}
-
-	$prompt = __( 'I need you to assume the persona of a web content writer with a strong focus on SEO and create an article for the website I specified. ', 'automated-blog-content-creator' );
-
-	$prompt .= __( 'The article should focus on the following keywords: "', 'automated-blog-content-creator' ) . implode( ', ', array_map( 'sanitize_text_field', $keywords ) ) . '"';
-
-	$prompt .= __( '. Use the following tone: ', 'automated-blog-content-creator' ) . $tone;
-
-	$prompt .= __( '. Use only HTML for the content, no need to add <article> or extra tags. Use <h1> for the title in the beginning. There is no need to add sections like category, keywords, etc. I just need the content that will be used on the article.', 'automated-blog-content-creator' );
-
-	if ( ! empty( $category_names ) ) {
-		$prompt    .= __( ' and in the following categories: "', 'automated-blog-content-creator' ) . implode( ', ', $category_names ) . '"';
-		$cat_images = __( 'Emphasize on: "', 'automated-blog-content-creator' ) . implode( ', ', $category_names ) . __( '" and other relevant visual elements.', 'automated-blog-content-creator' );
-	}
-
-	$prompt .= __( ' Keep the article under: ', 'automated-blog-content-creator' ) . $char_limit . __( ' tokens.', 'automated-blog-content-creator' );
-
-	$prompt_images = sprintf(
-		// translators: %1$s is a list of keywords, %2$s is a string representing category images, %3$s is the site URL.
-		__( 'Draw images representing %1$s. %2$s Visit %3$s for inspiration.', 'automated-blog-content-creator' ),
-		implode( ', ', array_map( 'sanitize_text_field', $keywords ) ),
-		$cat_images,
-		$site_url
-	);
-	if ( ( 'openai' === $prompt_select ) || ( 'gpt-4' === $prompt_select ) || ( 'gpt-4o' === $prompt_select ) ) {
-		$text   = abcc_openai_generate_text( $api_key, $prompt, $char_limit, $prompt_select );
-		$images = abcc_openai_generate_images( $api_key, $prompt_images, 1 );
-	} elseif ( 'gemini' === $prompt_select ) {
-		$text = abcc_gemini_generate_text( $api_key, $prompt, $char_limit );
-	}
-
-	if ( ! empty( $text ) && is_array( $text ) ) {
-		foreach ( $text as $key => $value ) {
+		$title = '';
+		foreach ( $text_array as $key => $value ) {
 			if ( strpos( $value, '<h1>' ) !== false && strpos( $value, '</h1>' ) !== false ) {
 				$title = str_replace( array( '<h1>', '</h1>' ), '', $value );
-				unset( $text[ $key ] );
+				unset( $text_array[ $key ] );
 				break;
 			}
 		}
 
-		$format_content = abcc_create_blocks( $text );
+		if ( empty( $title ) ) {
+			throw new Exception( 'No title found in generated content' );
+		}
+
+		$format_content = abcc_create_blocks( $text_array );
 		$post_content   = abcc_gutenberg_blocks( $format_content );
 
 		$post_data = array(
 			'post_title'    => $title,
 			'post_content'  => wp_kses_post( $post_content ),
 			'post_status'   => 'draft',
-			'post_author'   => 1,
+			'post_author'   => get_current_user_id(),
 			'post_type'     => 'post',
-			'post_category' => get_option( 'openai_selected_categories', array() ),
-
+			'post_category' => $selected_categories,
 		);
 
-		$post_id = wp_insert_post( $post_data );
+		$post_id = wp_insert_post( $post_data, true );
 
 		if ( is_wp_error( $post_id ) ) {
-			handle_api_request_error( $post_id, 'WordPress' ); // Use the error handler for WordPress errors.
+			throw new Exception( $post_id->get_error_message() );
 		}
 
+		if ( get_option( 'openai_generate_images', true ) ) {
+			try {
+				if ( $image_url = abcc_generate_featured_image( $prompt_select, $keywords, $category_names ) ) {
+					abcc_set_featured_image( $post_id, $image_url );
+				}
+			} catch ( Exception $e ) {
+				error_log( 'Featured image generation failed but post was created: ' . $e->getMessage() );
+			}
+		}
+
+		// Send notification if enabled
 		if ( get_option( 'openai_email_notifications', false ) ) {
-			$admin_email = get_option( 'admin_email' );
-			$subject     = esc_html__( 'New Automated Post Created', 'automated-blog-content-creator' );
-			$message     = esc_html__( 'A new post has been created automatically using OpenAI.', 'automated-blog-content-creator' );
-
-			wp_mail( $admin_email, $subject, $message );
+			abcc_send_post_notification( $post_id );
 		}
+
+		return $post_id;
+
+	} catch ( Exception $e ) {
+		error_log( 'Post Generation Error: ' . $e->getMessage() );
+		return new WP_Error( 'post_generation_failed', $e->getMessage() );
+	}
+}
+
+/**
+ * Send email notification about new post creation.
+ *
+ * @param int $post_id The ID of the created post.
+ * @return bool Whether the email was sent successfully.
+ */
+function abcc_send_post_notification( $post_id ) {
+	$admin_email = get_option( 'admin_email' );
+	$post        = get_post( $post_id );
+
+	if ( ! $post ) {
+		return false;
 	}
 
-	if ( ! empty( $images ) ) {
-		foreach ( $images as $image_url ) {
-			if ( ! function_exists( 'media_sideload_image' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/media.php';
-				require_once ABSPATH . 'wp-admin/includes/file.php';
-				require_once ABSPATH . 'wp-admin/includes/image.php';
-			}
-			$attachment_id = media_sideload_image( $image_url, $post_id, null, 'id' );
+	$subject = sprintf(
+		__( 'New AI Generated Post: %s', 'automated-blog-content-creator' ),
+		$post->post_title
+	);
 
-			if ( is_wp_error( $attachment_id ) ) {
-				error_log( 'Error getting image: ' . $attachment_id->get_error_message() . 'image: ' . $image_url );
-			} elseif ( is_numeric( $attachment_id ) ) {
-				set_post_thumbnail( $post_id, intval( $attachment_id ) );
+	$message = sprintf(
+		__( 'A new post "%1$s" has been created automatically.\n\nYou can edit it here: %2$s', 'automated-blog-content-creator' ),
+		$post->post_title,
+		get_edit_post_link( $post_id, '' )
+	);
+
+	return wp_mail( $admin_email, $subject, $message );
+}
+
+
+/**
+ * Helper function to build the content generation prompt.
+ *
+ * @param array  $keywords Array of keywords
+ * @param string $tone Content tone
+ * @param array  $category_names Array of category names
+ * @param int    $char_limit Character limit
+ * @return string
+ */
+function abcc_build_content_prompt( $keywords, $tone, $category_names, $char_limit ) {
+	$site_name        = get_bloginfo( 'name' );
+	$site_description = get_bloginfo( 'description' );
+	$site_url         = get_bloginfo( 'url' );
+
+	// Build a more structured prompt
+	$prompt_parts = array();
+
+	// Core instructions
+	$prompt_parts[] = sprintf(
+		'You are an expert content writer for %s, a website focused on %s',
+		$site_name,
+		$site_description
+	);
+
+	// Tone setting
+	$tone_instructions = array(
+		'funny'    => 'Write in a humorous and entertaining style, using clever wordplay and pop culture references where appropriate. Keep the tone light and engaging while still being informative.',
+		'business' => 'Maintain a professional and authoritative tone, focusing on clear, actionable information and industry insights.',
+		'academic' => 'Write in a scholarly tone with well-researched information, clear arguments, and proper citations where relevant.',
+		'epic'     => 'Use dramatic and powerful language to create an engaging narrative, making even simple topics sound grand and exciting.',
+		'personal' => 'Write in a conversational, relatable tone as if sharing experiences with a friend, while maintaining professionalism.',
+		'default'  => 'Balance professionalism with accessibility, creating engaging content that informs and entertains.',
+	);
+
+	$prompt_parts[] = $tone_instructions[ $tone ] ?? $tone_instructions['default'];
+
+	// Content structure
+	$prompt_parts[] = 'Create a comprehensive article that includes:
+		- An engaging <h1> title that includes key terms naturally
+		- A compelling introduction that hooks the reader
+		- Well-organized main sections with clear subheadings
+		- Relevant examples and references
+		- A strong conclusion that summarizes key points';
+
+	// Keywords and categories focus
+	if ( ! empty( $keywords ) ) {
+		$prompt_parts[] = sprintf(
+			'Focus on these main topics and keywords: %s. Integrate them naturally throughout the content.',
+			implode( ', ', array_map( 'sanitize_text_field', $keywords ) )
+		);
+	}
+
+	if ( ! empty( $category_names ) ) {
+		$prompt_parts[] = sprintf(
+			'This content belongs in the following categories: %s. Ensure the content aligns with these themes.',
+			implode( ', ', $category_names )
+		);
+	}
+
+	// SEO and formatting guidelines
+	$prompt_parts[] = sprintf(
+		'Format requirements:
+		- Use HTML formatting
+		- Structure content with <h1> for the main title only
+		- Keep the total content under %d tokens
+		- Ensure the content is SEO-optimized with natural keyword placement
+		- Break up text into readable paragraphs
+		- Use engaging subheadings for each main section',
+		$char_limit
+	);
+
+	return implode( "\n\n", $prompt_parts );
+}
+
+/**
+ * Helper function to generate content using selected AI service.
+ *
+ * @param string $api_key API key
+ * @param string $prompt Content prompt
+ * @param string $service AI service to use
+ * @param int    $char_limit Character limit
+ * @return array|false
+ */
+function abcc_generate_content( $api_key, $prompt, $service, $char_limit ) {
+
+	$result = false;
+
+	switch ( $service ) {
+		case 'gpt-3.5-turbo':
+		case 'gpt-4-turbo-preview':
+		case 'gpt-4':
+			$result = abcc_openai_generate_text( $api_key, $prompt, $char_limit, $service );
+			break;
+		case 'gemini-pro':
+			$result = abcc_gemini_generate_text( $api_key, $prompt, $char_limit );
+			break;
+		case 'claude-3-haiku':
+		case 'claude-3-sonnet':
+		case 'claude-3-opus':
+			$result = abcc_claude_generate_text( $api_key, $prompt, $char_limit, $service );
+			break;
+	}
+
+	if ( $result === false ) {
+		error_log(
+			sprintf(
+				'Content generation failed for service %s. Prompt: %s',
+				$service,
+				substr( $prompt, 0, 100 ) . '...' // Log first 100 chars of prompt
+			)
+		);
+	}
+
+	return $result;
+}
+
+/**
+ * Generates a featured image using AI services.
+ *
+ * @param string $api_key API key
+ * @param array  $keywords Keywords for image generation
+ * @param array  $category_names Category names for context
+ * @return string|false Image URL on success, false on failure
+ */
+function abcc_generate_featured_image( $text_model, $keywords, $category_names = array() ) {
+	try {
+		// Check if image generation is enabled
+		if ( ! get_option( 'openai_generate_images', true ) ) {
+			return false;
+		}
+
+		// Build image prompt
+		$prompt = abcc_build_image_prompt( $keywords, $category_names );
+
+		// Determine which service to use
+		$image_service = abcc_determine_image_service( $text_model );
+
+		if ( empty( $image_service['service'] ) ) {
+			error_log( 'No available image generation service' );
+			return false;
+		}
+
+		error_log(
+			sprintf(
+				'Attempting to generate image using %s service with prompt: %s',
+				$image_service['service'],
+				$prompt
+			)
+		);
+
+		// Generate image using determined service
+		switch ( $image_service['service'] ) {
+			case 'openai':
+				$images = abcc_openai_generate_images( $image_service['api_key'], $prompt, 1 );
+				if ( ! empty( $images ) && is_array( $images ) ) {
+					return $images[0];
+				}
 				break;
-			} else {
-				error_log( 'Unexpected media_sideload_image error: ' . var_export( $attachment_id, true ) );
-			}
+
+			case 'stability':
+				$result = abcc_stability_generate_images( $prompt, 1, $image_service['api_key'] );
+				if ( $result ) {
+					return $result;
+				}
+				break;
 		}
+
+		error_log( 'Image generation failed for selected service' );
+		return false;
+
+	} catch ( Exception $e ) {
+		error_log( 'Image Generation Error: ' . $e->getMessage() );
+		return false;
 	}
+}
+/**
+ * Sets the featured image for a post.
+ *
+ * @param int    $post_id Post ID
+ * @param string $image_url Image URL
+ * @return int|false Attachment ID on success, false on failure
+ */
+function abcc_set_featured_image( $post_id, $image_url ) {
+	try {
+		if ( ! function_exists( 'media_sideload_image' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/media.php';
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+		}
+
+		// Download and attach the image
+		$attachment_id = media_sideload_image( $image_url, $post_id, null, 'id' );
+
+		if ( is_wp_error( $attachment_id ) ) {
+			throw new Exception( $attachment_id->get_error_message() );
+		}
+
+		// Set as featured image
+		set_post_thumbnail( $post_id, $attachment_id );
+		return $attachment_id;
+
+	} catch ( Exception $e ) {
+		error_log( 'Featured Image Error: ' . $e->getMessage() );
+		return false;
+	}
+}
+
+/**
+ * Builds the image generation prompt.
+ *
+ * @param array $keywords Keywords for the image
+ * @param array $category_names Category names for context
+ * @return string
+ */
+function abcc_build_image_prompt( $keywords, $category_names ) {
+	$prompt_parts = array();
+
+	// Add keywords
+	if ( ! empty( $keywords ) ) {
+		$prompt_parts[] = implode( ', ', array_map( 'sanitize_text_field', $keywords ) );
+	}
+
+	// Add categories for context
+	if ( ! empty( $category_names ) ) {
+		$prompt_parts[] = 'Related to: ' . implode( ', ', $category_names );
+	}
+
+	// Add style guidance
+	$prompt_parts[] = 'Create a high-quality, professional image suitable for a blog post';
+
+	return implode( '. ', $prompt_parts );
 }
 
 /**
@@ -328,28 +659,78 @@ function get_openai_event_schedule() {
 		'timestamp' => $timestamp,
 	);
 }
+
 /**
- * This function generates a post daily using OpenAI API based on specified keywords and character
- * limit.
+ * Generates a post on schedule using AI services.
  *
- * return nothing if any of the following conditions are met:
- * - The OpenAI API key is empty
- * - The OpenAI keywords are empty
- * - The OpenAI auto-create option is false
+ * @return bool|int Returns post ID on success, false if conditions aren't met or on failure
  */
 function abcc_openai_generate_post_scheduled() {
-	$api_key       = abcc_check_api_key();
-	$keywords      = explode( "\n", get_option( 'openai_keywords', '' ) );
-	$tone          = get_option( 'openai_tone', 'default' );
-	$auto_create   = get_option( 'openai_auto_create', 'none' );
-	$char_limit    = get_option( 'openai_char_limit', 200 );
-	$prompt_select = get_option( 'prompt_select', 'openai' );
+	try {
+		// Get required parameters
+		$api_key       = abcc_check_api_key();
+		$keywords      = explode( "\n", get_option( 'openai_keywords', '' ) );
+		$tone          = get_option( 'openai_tone', 'default' );
+		$auto_create   = get_option( 'openai_auto_create', 'none' );
+		$char_limit    = get_option( 'openai_char_limit', 200 );
+		$prompt_select = get_option( 'prompt_select', 'gpt-3.5-turbo' );
 
-	if ( empty( $api_key ) || empty( $keywords ) || 'none' === $auto_create ) {
+		// Log scheduled attempt
+		error_log(
+			sprintf(
+				'Scheduled post generation attempt - Auto Create: %s, Model: %s, Keywords count: %d',
+				$auto_create,
+				$prompt_select,
+				count( $keywords )
+			)
+		);
+
+		// Validate conditions
+		if ( empty( $api_key ) ) {
+			throw new Exception( 'API key not configured for scheduled post generation' );
+		}
+
+		if ( empty( $keywords ) ) {
+			throw new Exception( 'No keywords configured for scheduled post generation' );
+		}
+
+		if ( 'none' === $auto_create ) {
+			throw new Exception( 'Auto-create is disabled' );
+		}
+
+		// Generate the post
+		$post_id = abcc_openai_generate_post(
+			$api_key,
+			$keywords,
+			$prompt_select,
+			$tone,
+			$auto_create,
+			$char_limit
+		);
+
+		if ( is_wp_error( $post_id ) ) {
+			throw new Exception( $post_id->get_error_message() );
+		}
+
+		return $post_id;
+
+	} catch ( Exception $e ) {
+		error_log( 'Scheduled Post Generation Error: ' . $e->getMessage() );
+
+		// Send admin notification about the failure if enabled
+		if ( get_option( 'openai_email_notifications', false ) ) {
+			wp_mail(
+				get_option( 'admin_email' ),
+				__( 'Scheduled Post Generation Failed', 'automated-blog-content-creator' ),
+				sprintf(
+					__( 'The scheduled post generation failed with error: %s', 'automated-blog-content-creator' ),
+					$e->getMessage()
+				)
+			);
+		}
+
 		return false;
 	}
-
-	abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone, $auto_create, $char_limit );
 }
 
 /**
@@ -379,21 +760,43 @@ add_action( 'abcc_openai_generate_post_hook', 'abcc_openai_generate_post_schedul
  * keywords, and character limit.
  */
 function abcc_openai_generate_post_ajax() {
-
 	check_ajax_referer( 'abcc_openai_generate_post' );
-	$api_key       = abcc_check_api_key();
-	$keywords      = explode( "\n", get_option( 'openai_keywords', '' ) );
-	$char_limit    = get_option( 'openai_char_limit', 200 );
-	$tone          = get_option( 'openai_tone', 'default' );
-	$prompt_select = get_option( 'prompt_select', 'openai' );
 
-	if ( empty( $api_key ) || empty( $keywords ) ) {
-		wp_send_json_error( esc_html__( 'API Key, Prompt Engine or keywords not set.', 'automated-blog-content-creator' ) );
+	try {
+		$api_key       = abcc_check_api_key();
+		$keywords      = explode( "\n", get_option( 'openai_keywords', '' ) );
+		$char_limit    = get_option( 'openai_char_limit', 200 );
+		$tone          = get_option( 'openai_tone', 'default' );
+		$prompt_select = get_option( 'prompt_select', 'gpt-3.5-turbo' );
+
+		$result = abcc_openai_generate_post(
+			$api_key,
+			$keywords,
+			$prompt_select,
+			$tone,
+			false,
+			$char_limit
+		);
+
+		if ( is_wp_error( $result ) ) {
+			throw new Exception( $result->get_error_message() );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => esc_html__( 'Post created successfully!', 'automated-blog-content-creator' ),
+				'post_id' => $result,
+			)
+		);
+
+	} catch ( Exception $e ) {
+		wp_send_json_error(
+			array(
+				'message' => $e->getMessage(),
+				'details' => WP_DEBUG ? $e->getTraceAsString() : null,
+			)
+		);
 	}
-
-	abcc_openai_generate_post( $api_key, $keywords, $prompt_select, $tone, false, $char_limit );
-
-	wp_send_json_success( esc_html__( 'Post created successfully!', 'automated-blog-content-creator' ) );
 }
 add_action( 'wp_ajax_openai_generate_post', 'abcc_openai_generate_post_ajax' );
 

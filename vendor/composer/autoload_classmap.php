@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'ABCC_OpenAI_Client' => $baseDir . '/includes/class-abcc-openai-client.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'GeminiAPI\\ChatSession' => $vendorDir . '/gemini-api-php/client/src/ChatSession.php',
     'GeminiAPI\\Client' => $vendorDir . '/gemini-api-php/client/src/Client.php',
@@ -35,6 +36,7 @@ return array(
     'GeminiAPI\\Resources\\Content' => $vendorDir . '/gemini-api-php/client/src/Resources/Content.php',
     'GeminiAPI\\Resources\\ContentEmbedding' => $vendorDir . '/gemini-api-php/client/src/Resources/ContentEmbedding.php',
     'GeminiAPI\\Resources\\Model' => $vendorDir . '/gemini-api-php/client/src/Resources/Model.php',
+    'GeminiAPI\\Resources\\ModelName' => $vendorDir . '/gemini-api-php/client/src/Resources/ModelName.php',
     'GeminiAPI\\Resources\\Parts\\ImagePart' => $vendorDir . '/gemini-api-php/client/src/Resources/Parts/ImagePart.php',
     'GeminiAPI\\Resources\\Parts\\PartInterface' => $vendorDir . '/gemini-api-php/client/src/Resources/Parts/PartInterface.php',
     'GeminiAPI\\Resources\\Parts\\TextPart' => $vendorDir . '/gemini-api-php/client/src/Resources/Parts/TextPart.php',
@@ -46,6 +48,7 @@ return array(
     'GeminiAPI\\Responses\\ListModelsResponse' => $vendorDir . '/gemini-api-php/client/src/Responses/ListModelsResponse.php',
     'GeminiAPI\\SafetySetting' => $vendorDir . '/gemini-api-php/client/src/SafetySetting.php',
     'GeminiAPI\\Traits\\ArrayTypeValidator' => $vendorDir . '/gemini-api-php/client/src/Traits/ArrayTypeValidator.php',
+    'GeminiAPI\\Traits\\ModelNameToString' => $vendorDir . '/gemini-api-php/client/src/Traits/ModelNameToString.php',
     'Http\\Discovery\\ClassDiscovery' => $vendorDir . '/php-http/discovery/src/ClassDiscovery.php',
     'Http\\Discovery\\Exception' => $vendorDir . '/php-http/discovery/src/Exception.php',
     'Http\\Discovery\\Exception\\ClassInstantiationFailedException' => $vendorDir . '/php-http/discovery/src/Exception/ClassInstantiationFailedException.php',
@@ -80,8 +83,6 @@ return array(
     'Nyholm\\Psr7\\StreamTrait' => $vendorDir . '/nyholm/psr7/src/StreamTrait.php',
     'Nyholm\\Psr7\\UploadedFile' => $vendorDir . '/nyholm/psr7/src/UploadedFile.php',
     'Nyholm\\Psr7\\Uri' => $vendorDir . '/nyholm/psr7/src/Uri.php',
-    'Orhanerday\\OpenAi\\OpenAi' => $vendorDir . '/orhanerday/open-ai/src/OpenAi.php',
-    'Orhanerday\\OpenAi\\Url' => $vendorDir . '/orhanerday/open-ai/src/Url.php',
     'Psr\\Container\\ContainerExceptionInterface' => $vendorDir . '/psr/container/src/ContainerExceptionInterface.php',
     'Psr\\Container\\ContainerInterface' => $vendorDir . '/psr/container/src/ContainerInterface.php',
     'Psr\\Container\\NotFoundExceptionInterface' => $vendorDir . '/psr/container/src/NotFoundExceptionInterface.php',
@@ -191,7 +192,9 @@ return array(
     'Symfony\\Contracts\\Service\\Attribute\\Required' => $vendorDir . '/symfony/service-contracts/Attribute/Required.php',
     'Symfony\\Contracts\\Service\\Attribute\\SubscribedService' => $vendorDir . '/symfony/service-contracts/Attribute/SubscribedService.php',
     'Symfony\\Contracts\\Service\\ResetInterface' => $vendorDir . '/symfony/service-contracts/ResetInterface.php',
+    'Symfony\\Contracts\\Service\\ServiceCollectionInterface' => $vendorDir . '/symfony/service-contracts/ServiceCollectionInterface.php',
     'Symfony\\Contracts\\Service\\ServiceLocatorTrait' => $vendorDir . '/symfony/service-contracts/ServiceLocatorTrait.php',
+    'Symfony\\Contracts\\Service\\ServiceMethodsSubscriberTrait' => $vendorDir . '/symfony/service-contracts/ServiceMethodsSubscriberTrait.php',
     'Symfony\\Contracts\\Service\\ServiceProviderInterface' => $vendorDir . '/symfony/service-contracts/ServiceProviderInterface.php',
     'Symfony\\Contracts\\Service\\ServiceSubscriberInterface' => $vendorDir . '/symfony/service-contracts/ServiceSubscriberInterface.php',
     'Symfony\\Contracts\\Service\\ServiceSubscriberTrait' => $vendorDir . '/symfony/service-contracts/ServiceSubscriberTrait.php',

@@ -24,10 +24,6 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
             'Psr\\Http\\Client\\' => 16,
             'Psr\\Container\\' => 14,
         ),
-        'O' => 
-        array (
-            'Orhanerday\\OpenAi\\' => 18,
-        ),
         'N' => 
         array (
             'Nyholm\\Psr7\\' => 12,
@@ -61,8 +57,8 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
         ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-factory/src',
-            1 => __DIR__ . '/..' . '/psr/http-message/src',
+            0 => __DIR__ . '/..' . '/psr/http-message/src',
+            1 => __DIR__ . '/..' . '/psr/http-factory/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -71,11 +67,6 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
         'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
-        ),
-        'Orhanerday\\OpenAi\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/src',
-            1 => __DIR__ . '/..' . '/orhanerday/open-ai/src',
         ),
         'Nyholm\\Psr7\\' => 
         array (
@@ -92,6 +83,7 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
     );
 
     public static $classMap = array (
+        'ABCC_OpenAI_Client' => __DIR__ . '/../..' . '/includes/class-abcc-openai-client.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'GeminiAPI\\ChatSession' => __DIR__ . '/..' . '/gemini-api-php/client/src/ChatSession.php',
         'GeminiAPI\\Client' => __DIR__ . '/..' . '/gemini-api-php/client/src/Client.php',
@@ -121,6 +113,7 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
         'GeminiAPI\\Resources\\Content' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/Content.php',
         'GeminiAPI\\Resources\\ContentEmbedding' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/ContentEmbedding.php',
         'GeminiAPI\\Resources\\Model' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/Model.php',
+        'GeminiAPI\\Resources\\ModelName' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/ModelName.php',
         'GeminiAPI\\Resources\\Parts\\ImagePart' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/Parts/ImagePart.php',
         'GeminiAPI\\Resources\\Parts\\PartInterface' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/Parts/PartInterface.php',
         'GeminiAPI\\Resources\\Parts\\TextPart' => __DIR__ . '/..' . '/gemini-api-php/client/src/Resources/Parts/TextPart.php',
@@ -132,6 +125,7 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
         'GeminiAPI\\Responses\\ListModelsResponse' => __DIR__ . '/..' . '/gemini-api-php/client/src/Responses/ListModelsResponse.php',
         'GeminiAPI\\SafetySetting' => __DIR__ . '/..' . '/gemini-api-php/client/src/SafetySetting.php',
         'GeminiAPI\\Traits\\ArrayTypeValidator' => __DIR__ . '/..' . '/gemini-api-php/client/src/Traits/ArrayTypeValidator.php',
+        'GeminiAPI\\Traits\\ModelNameToString' => __DIR__ . '/..' . '/gemini-api-php/client/src/Traits/ModelNameToString.php',
         'Http\\Discovery\\ClassDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/ClassDiscovery.php',
         'Http\\Discovery\\Exception' => __DIR__ . '/..' . '/php-http/discovery/src/Exception.php',
         'Http\\Discovery\\Exception\\ClassInstantiationFailedException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/ClassInstantiationFailedException.php',
@@ -166,8 +160,6 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
         'Nyholm\\Psr7\\StreamTrait' => __DIR__ . '/..' . '/nyholm/psr7/src/StreamTrait.php',
         'Nyholm\\Psr7\\UploadedFile' => __DIR__ . '/..' . '/nyholm/psr7/src/UploadedFile.php',
         'Nyholm\\Psr7\\Uri' => __DIR__ . '/..' . '/nyholm/psr7/src/Uri.php',
-        'Orhanerday\\OpenAi\\OpenAi' => __DIR__ . '/..' . '/orhanerday/open-ai/src/OpenAi.php',
-        'Orhanerday\\OpenAi\\Url' => __DIR__ . '/..' . '/orhanerday/open-ai/src/Url.php',
         'Psr\\Container\\ContainerExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerExceptionInterface.php',
         'Psr\\Container\\ContainerInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerInterface.php',
         'Psr\\Container\\NotFoundExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/NotFoundExceptionInterface.php',
@@ -277,7 +269,9 @@ class ComposerStaticInit078d42ba981ac1677617e1d6fe549438
         'Symfony\\Contracts\\Service\\Attribute\\Required' => __DIR__ . '/..' . '/symfony/service-contracts/Attribute/Required.php',
         'Symfony\\Contracts\\Service\\Attribute\\SubscribedService' => __DIR__ . '/..' . '/symfony/service-contracts/Attribute/SubscribedService.php',
         'Symfony\\Contracts\\Service\\ResetInterface' => __DIR__ . '/..' . '/symfony/service-contracts/ResetInterface.php',
+        'Symfony\\Contracts\\Service\\ServiceCollectionInterface' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceCollectionInterface.php',
         'Symfony\\Contracts\\Service\\ServiceLocatorTrait' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceLocatorTrait.php',
+        'Symfony\\Contracts\\Service\\ServiceMethodsSubscriberTrait' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceMethodsSubscriberTrait.php',
         'Symfony\\Contracts\\Service\\ServiceProviderInterface' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceProviderInterface.php',
         'Symfony\\Contracts\\Service\\ServiceSubscriberInterface' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceSubscriberInterface.php',
         'Symfony\\Contracts\\Service\\ServiceSubscriberTrait' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceSubscriberTrait.php',

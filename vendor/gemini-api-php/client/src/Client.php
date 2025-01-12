@@ -40,6 +40,7 @@ use function strtolower;
 class Client implements GeminiClientInterface
 {
     private string $baseUrl = 'https://generativelanguage.googleapis.com';
+    private string $version = GeminiClientInterface::API_VERSION_V1;
 
     /**
      * @var array<string, string|string[]>
@@ -67,7 +68,27 @@ class Client implements GeminiClientInterface
         return $this->generativeModel(ModelName::GeminiProVision);
     }
 
-    public function generativeModel(ModelName $modelName): GenerativeModel
+    public function geminiPro10(): GenerativeModel
+    {
+        return $this->generativeModel(ModelName::GeminiPro10);
+    }
+    public function geminiPro10Latest(): GenerativeModel
+    {
+        return $this->generativeModel(ModelName::GeminiPro10Latest);
+    }
+
+    public function geminiPro15(): GenerativeModel
+    {
+        return $this->generativeModel(ModelName::GeminiPro15);
+    }
+
+    public function geminiProFlash1_5(): GenerativeModel
+    {
+        return $this->generativeModel(ModelName::GeminiPro15Flash);
+    }
+
+
+    public function generativeModel(ModelName|string $modelName): GenerativeModel
     {
         return new GenerativeModel(
             $this,
@@ -75,7 +96,7 @@ class Client implements GeminiClientInterface
         );
     }
 
-    public function embeddingModel(ModelName $modelName): EmbeddingModel
+    public function embeddingModel(ModelName|string $modelName): EmbeddingModel
     {
         return new EmbeddingModel(
             $this,
@@ -143,7 +164,7 @@ class Client implements GeminiClientInterface
             }
         }
 
-        curl_setopt($ch, CURLOPT_URL, "{$this->baseUrl}/v1/{$request->getOperation()}");
+        curl_setopt($ch, CURLOPT_URL, $this->getRequestUrl($request));
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request));
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headerLines);
@@ -194,6 +215,19 @@ class Client implements GeminiClientInterface
         return $clone;
     }
 
+    public function withV1BetaVersion(): self
+    {
+        return $this->withVersion(GeminiClientInterface::API_VERSION_V1_BETA);
+    }
+
+    public function withVersion(string $version): self
+    {
+        $clone = clone $this;
+        $clone->version = $version;
+
+        return $clone;
+    }
+
     /**
      * @param array<string, string|string[]> $headers
      * @return self
@@ -221,6 +255,16 @@ class Client implements GeminiClientInterface
         ];
     }
 
+    private function getRequestUrl(RequestInterface $request): string
+    {
+        return sprintf(
+            '%s/%s/%s',
+            $this->baseUrl,
+            $this->version,
+            $request->getOperation(),
+        );
+    }
+
     /**
      * @throws ClientExceptionInterface
      */
@@ -230,9 +274,11 @@ class Client implements GeminiClientInterface
             throw new RuntimeException('Missing client or factory for Gemini API operation');
         }
 
-        $uri = "{$this->baseUrl}/v1/{$request->getOperation()}";
         $httpRequest = $this->requestFactory
-            ->createRequest($request->getHttpMethod(), $uri);
+            ->createRequest(
+                $request->getHttpMethod(),
+                $this->getRequestUrl($request),
+            );
 
         foreach ($this->getRequestHeaders() as $name => $value) {
             $httpRequest = $httpRequest->withAddedHeader($name, $value);

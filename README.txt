@@ -1,33 +1,78 @@
 === WP-AutoInsight ===
 Contributors: phalkmin
-Tags: openai, geminiai, blog, post, generator, gpt4, gpt4o, gpt35, dalle3
+Tags: openai, anthropic, google-ai, blog, post, generator, gpt-4, claude-3, gemini, dall-e-3, stability-ai
 Requires at least: 5.8
-Tested up to: 6.5
-Stable tag: 1.9
+Tested up to: 6.7
+Stable tag: 2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 
-WP-AutoInsight revolutionizes blog content creation by using OpenAI's GPT models and the Gemini API. From crafting SEO-optimized articles to generating relevant images, this plugin automates content generation for your WordPress site!
+WP-AutoInsight revolutionizes content creation by harnessing multiple AI platforms including OpenAI, Anthropic's Claude, and Google's Gemini. Create SEO-optimized blog posts automatically with advanced AI models while maintaining full control over tone, style, and scheduling.
 
-Features:
+= Key Features =
 
-- Integration with multiple OpenAI GPT models (GPT-3.5, GPT-4, and GPT-4o).
-- Gemini API support for alternative content generation.
-- Advanced settings to specify content generation models and customize token limits.
-- Automatic and manual blog post generation with SEO-focused keywords.
-- Dynamic image creation related to the content using OpenAI's powerful DALL-E model.
-- Supports Gutenberg blocks for easy content formatting.
-- Scheduled post creation options: hourly, daily, or weekly, to keep your blog constantly updated.
-- AJAX-powered interface for immediate manual post generation.
-- Translatable strings for internationalization.
+* **Multi-Platform AI Integration**
+  - OpenAI Models
+  - Claude 3 Models 
+  - Google's Gemini Pro
+  - Cost-aware model selection with clear pricing tiers
+
+* **Advanced Image Generation**
+  - Primary: DALL-E 3 integration for high-quality featured images
+  - Fallback: Stability AI support for reliable image generation
+  - Smart service selection based on your chosen text model
+  - Customizable image generation preferences
+
+* **Content Customization**
+  - Multiple writing tones: Business, Academic, Funny, Epic, Personal, or Custom
+  - Category-aware content generation
+  - SEO-optimized output with proper HTML structure
+  - Adjustable token limits for content length control
+
+* **Flexible Post Management**
+  - Automated scheduling (hourly, daily, or weekly)
+  - Manual post generation with live preview
+  - Email notifications for new content
+
+* **Enhanced Security**
+  - Support for wp-config.php API key storage
+  - Secure endpoint handling
+  - Input sanitization and validation
 
 == Installation ==
 
-1. Upload the `openai-api-blog-post-creator` directory to the `/wp-content/plugins/` directory, or install the plugin through the WordPress plugins screen directly.
-2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Use the 'OpenAI Blog Post' menu in the WordPress admin sidebar to configure the plugin settings.
+1. Upload `wp-autoinsight` to the `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Navigate to 'WP-AutoInsight' in your admin menu
+4. Configure your preferred AI service API keys
+5. Set up your content preferences and posting schedule
+
+== Configuration ==
+
+= API Keys =
+You'll need at least one of the following API keys:
+* OpenAI API key (for GPT models and DALL-E)
+* Claude API key (for Claude 3 models)
+* Gemini API key (for Google's AI)
+* Stability AI key (optional, for alternative image generation)
+
+For enhanced security, add your API keys to wp-config.php:
+```php
+define('OPENAI_API', 'your-key-here');
+define('CLAUDE_API', 'your-key-here');
+define('GEMINI_API', 'your-key-here');
+define('STABILITY_API', 'your-key-here');
+```
+
+= Content Settings =
+1. Select your preferred AI model
+2. Set your desired content tone
+3. Configure keywords and categories
+4. Adjust token limits and scheduling
+5. Enable/disable image generation
+6. Set up email notifications
 
 == Frequently Asked Questions ==
 
@@ -65,6 +110,24 @@ You can manually generate a blog post by clicking the "Create post manually" but
 2. Example generated blog post using Gutenberg blocks.
 
 == Changelog ==
+
+= 2.0 =
+* Added:
+  - Claude 3 AI model integration (Haiku, Sonnet, and Opus)
+  - Enhanced image generation with DALL-E 3
+  - Stability AI integration as fallback
+  - Cost-aware model selection interface
+  - Better security features
+
+* Changed:
+  - Refactored code for better maintainability
+  - Improved API handling architecture
+  - Enhanced content generation quality
+
+* Fixed:
+  - Various bug fixes and improvements
+  - Better error handling
+  - Enhanced stability
 
 = 1.9 =
 - Added:
@@ -128,3 +191,11 @@ You can manually generate a blog post by clicking the "Create post manually" but
 = 0.5 =
 
 - Initial release.
+
+
+== Support ==
+
+For support, feature requests, or to contribute to development:
+* Visit the [plugin homepage](https://wordpress.org/plugins/automated-blog-content-creator/)
+* Submit issues on [GitHub](https://github.com/phalkmin/openai-blog)
+* Support development: [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U1LM8AP)
